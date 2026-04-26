@@ -17,10 +17,13 @@ extends CanvasLayer
 @onready var _cargo_label: Label = %CargoLabel
 @onready var _trips_label: Label = %TripsLabel
 
-@onready var _kolkata_price_label: Label = %KolkataPriceLabel
-@onready var _patna_stock_label: Label = %PatnaStockLabel
-@onready var _kolkata_stock_label: Label = %KolkataStockLabel
+@onready var _dest_price_label: Label = %DestPriceLabel
+@onready var _origin_stock_label: Label = %OriginStockLabel
+@onready var _dest_stock_label: Label = %DestStockLabel
 @onready var _demand_label: Label = %DemandLabel
+
+@onready var _next_route_btn: Button = %NextRouteButton
+@onready var _route_counter_label: Label = %RouteCounterLabel
 
 @onready var _last_revenue_label: Label = %LastRevenueLabel
 @onready var _last_cost_label: Label = %LastCostLabel
@@ -32,6 +35,7 @@ extends CanvasLayer
 @onready var _build_track_btn: Button = %BuildTrackButton
 @onready var _buy_train_btn: Button = %BuyTrainButton
 @onready var _create_route_btn: Button = %CreateRouteButton
+@onready var _next_route_btn: Button = %NextRouteButton
 @onready var _start_btn: Button = %StartButton
 @onready var _pause_resume_btn: Button = %PauseResumeButton
 @onready var _reset_btn: Button = %ResetButton
@@ -40,6 +44,7 @@ extends CanvasLayer
 @onready var _route_creation_panel: Node = %RouteCreationPanel
 
 var _route_toy: Node
+var _selected_route_index: int = 0
 var _last_trip_count: int = -1
 var _last_state_name: String = ""
 
@@ -51,8 +56,10 @@ func bind_route_toy(route_toy: Node) -> void:
 	_route_toy = route_toy
 	# Disconnect old runner signals if any
 	_disconnect_all_runner_signals()
-	if route_toy.runner != null:
-		_connect_runner_signals(route_toy.runner)
+	# Connect to ALL runners
+	for r in route_toy.active_runners:
+		_connect_runner_signals(r)
+	_selected_route_index = 0
 	_update_all()
 
 
@@ -93,6 +100,7 @@ func _ready() -> void:
 	_build_track_btn.pressed.connect(func(): _route_toy.toggle_build_mode())
 	_buy_train_btn.pressed.connect(_on_buy_train_pressed)
 	_create_route_btn.pressed.connect(_on_create_route_pressed)
+	_next_route_btn.pressed.connect(_on_next_route_pressed)
 
 	_start_btn.pressed.connect(func(): _route_toy.start_route())
 	_pause_resume_btn.pressed.connect(func(): _route_toy.pause_resume())
@@ -128,8 +136,8 @@ func _process(delta: float) -> void:
 # Signal handlers
 # ------------------------------------------------------------------------------
 
-func _on_state_changed(new_state: String) -> void:
-	_route_status_label.text = "Status: %s" % new_state
+func _on_state_changed(_new_state: String) -> void:
+	_update_route_info()
 
 
 func _on_trip_completed(_stats: RouteProfitStats) -> void:
@@ -144,6 +152,7 @@ func _on_reset_pressed() -> void:
 	_disconnect_all_runner_signals()
 	_route_toy.reset_simulation()
 	close_panels()
+	_selected_route_index = 0
 	_last_trip_count = -1
 	_last_state_name = ""
 	_update_all()
@@ -178,6 +187,34 @@ func _on_train_purchased(train_id: String, city_id: String) -> void:
 func _on_route_created(params: Dictionary) -> void:
 	if _route_toy != null:
 		_route_toy.create_route(params)
+		# Connect signals to the newly added runner
+		var new_runner = _route_toy.get_runner_by_index(_route_toy.get_runner_count() - 1)
+		if new_runner != null:
+			_connect_runner_signals(new_runner)
+		# Auto-select the new route
+		_selected_route_index = _route_toy.get_runner_count() - 1
+		_update_all()
+
+
+func _on_next_route_pressed() -> void:
+	var count: int = _route_toy.get_runner_count()
+	if count <= 1:
+		return
+	_selected_route_index = (_selected_route_index + 1) % count
+	_update_all()
+
+
+func _selected_runner() -> RouteRunner:
+	if _route_toy == null:
+		return null
+	return _route_toy.get_runner_by_index(_selected_route_index)
+
+
+func _selected_schedule() -> RouteSchedule:
+	var r: RouteRunner = _selected_runner()
+	if r == null:
+		return null
+	return r._schedule
 
 
 # ------------------------------------------------------------------------------
@@ -198,14 +235,22 @@ func _update_treasury_date() -> void:
 
 
 func _update_route_info() -> void:
-	var state: String = _route_toy.get_runner_state_name()
+	var runner = _selected_runner()
+	var state := "No route"
+	if runner != null:
+		state = runner.get_state_name()
 	if state != _last_state_name:
 		_last_state_name = state
 		_route_status_label.text = "Status: %s" % state
 
-	var runner = _route_toy.runner
-	if runner != null and runner._schedule != null:
-		var sched: RouteSchedule = runner._schedule
+	var count: int = _route_toy.get_runner_count()
+	if count > 0:
+		_route_counter_label.text = "Route %d / %d" % [_selected_route_index + 1, count]
+	else:
+		_route_counter_label.text = "Route 0 / 0"
+
+	var sched: RouteSchedule = _selected_schedule()
+	if sched != null:
 		var origin_data: CityData = _route_toy.city_data_by_id.get(sched.origin_city_id, null) as CityData
 		var dest_data: CityData = _route_toy.city_data_by_id.get(sched.destination_city_id, null) as CityData
 		var origin_str := origin_data.display_name if origin_data != null else sched.origin_city_id
@@ -218,19 +263,34 @@ func _update_route_info() -> void:
 
 
 func _update_city_info() -> void:
-	var price: float = _route_toy.get_sell_price("kolkata", "coal")
-	var patna_stock: int = _route_toy.get_city_stock("patna", "coal")
-	var kolkata_stock: int = _route_toy.get_city_stock("kolkata", "coal")
-	var demand: String = _route_toy.get_demand_label("kolkata", "coal")
+	var sched: RouteSchedule = _selected_schedule()
+	if sched == null:
+		_dest_price_label.text = "Dest Price: —"
+		_origin_stock_label.text = "Origin Stock: —"
+		_dest_stock_label.text = "Dest Stock: —"
+		_demand_label.text = "Demand: —"
+		return
 
-	_kolkata_price_label.text = "Kolkata Coal Price: ₹%.0f" % price
-	_patna_stock_label.text = "Patna Coal Stock: %s" % _comma_sep(patna_stock)
-	_kolkata_stock_label.text = "Kolkata Coal Stock: %s" % _comma_sep(kolkata_stock)
+	var origin_id: String = sched.origin_city_id
+	var dest_id: String = sched.destination_city_id
+	var cargo_id: String = sched.cargo_id
+
+	var price: float = _route_toy.get_sell_price(dest_id, cargo_id)
+	var origin_stock: int = _route_toy.get_city_stock(origin_id, cargo_id)
+	var dest_stock: int = _route_toy.get_city_stock(dest_id, cargo_id)
+	var demand: String = _route_toy.get_demand_label(dest_id, cargo_id)
+
+	_dest_price_label.text = "Dest Price: ₹%.0f" % price
+	_origin_stock_label.text = "Origin Stock: %s" % _comma_sep(origin_stock)
+	_dest_stock_label.text = "Dest Stock: %s" % _comma_sep(dest_stock)
 	_demand_label.text = "Demand: %s" % demand
 
 
 func _update_trip_stats() -> void:
-	var stats: RouteProfitStats = _route_toy.get_runner_stats()
+	var runner: RouteRunner = _selected_runner()
+	var stats: RouteProfitStats = null
+	if runner != null:
+		stats = runner.get_stats()
 	if stats == null:
 		_trips_label.text = "Trips: 0"
 		_last_revenue_label.text = "Last Revenue: ₹0"

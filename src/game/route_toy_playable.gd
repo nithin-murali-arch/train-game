@@ -24,6 +24,12 @@ var runner: RouteRunner:
 var owned_trains: Array[TrainEntity] = []
 var active_runners: Array[RouteRunner] = []
 
+# Stable instance ID tracking
+var train_by_instance_id: Dictionary = {}   # instance_id -> TrainEntity
+var route_by_instance_id: Dictionary = {}   # instance_id -> RouteRunner
+var _next_train_instance_id: int = 1
+var _next_route_instance_id: int = 1
+
 var train_data: TrainData
 var pathfinder: TrainPathfinder
 
@@ -116,6 +122,8 @@ func reset_simulation() -> void:
 			r.stop_route()
 			r.queue_free()
 	active_runners.clear()
+	route_by_instance_id.clear()
+	_next_route_instance_id = 1
 
 	# Remove all trains
 	for t in owned_trains:
@@ -124,6 +132,8 @@ func reset_simulation() -> void:
 				t.get_parent().remove_child(t)
 			t.queue_free()
 	owned_trains.clear()
+	train_by_instance_id.clear()
+	_next_train_instance_id = 1
 
 	# Clear graph
 	if graph != null:
@@ -203,9 +213,15 @@ func purchase_train(train_id: String, city_id: String) -> bool:
 		train_cargo.setup_from_train_data(t_data, cargo_catalog)
 
 	t.reset_to(cities_grid[city_id])
+
+	# Assign stable instance ID
+	t.instance_id = "train_%03d" % _next_train_instance_id
+	_next_train_instance_id += 1
+	train_by_instance_id[t.instance_id] = t
+
 	owned_trains.append(t)
 
-	_show_toast("Purchased %s at %s — ₹%s" % [t_data.display_name, city_data_by_id[city_id].display_name, _comma_sep(t_data.cost)])
+	_show_toast("Purchased %s (%s) at %s — ₹%s" % [t_data.display_name, t.instance_id, city_data_by_id[city_id].display_name, _comma_sep(t_data.cost)])
 	return true
 
 
@@ -248,6 +264,8 @@ func create_route(params: Dictionary) -> bool:
 		return false
 
 	var new_schedule := RouteSchedule.new()
+	new_schedule.instance_id = "route_%03d" % _next_route_instance_id
+	new_schedule.assigned_train_instance_id = t.instance_id
 	new_schedule.route_id = "%s_to_%s_%s" % [origin_id, destination_id, cargo_id]
 	new_schedule.origin_city_id = origin_id
 	new_schedule.destination_city_id = destination_id
@@ -270,6 +288,8 @@ func create_route(params: Dictionary) -> bool:
 	)
 	add_child(new_runner)
 	active_runners.append(new_runner)
+	route_by_instance_id[new_schedule.instance_id] = new_runner
+	_next_route_instance_id += 1
 
 	# Auto-start the route
 	new_runner.start_route()
@@ -312,6 +332,27 @@ func get_runner_state_name() -> String:
 
 func get_runner_stats() -> RouteProfitStats:
 	return runner.get_stats() if runner != null else null
+
+
+func get_runner_by_index(index: int) -> RouteRunner:
+	if index < 0 or index >= active_runners.size():
+		return null
+	return active_runners[index]
+
+
+func get_runner_count() -> int:
+	return active_runners.size()
+
+
+func get_train_by_instance_id(id: String) -> TrainEntity:
+	return train_by_instance_id.get(id, null) as TrainEntity
+
+
+func get_route_schedule_by_index(index: int) -> RouteSchedule:
+	var r: RouteRunner = get_runner_by_index(index)
+	if r == null:
+		return null
+	return r._schedule
 
 
 func get_city_stock(city_id: String, cargo_id: String) -> int:
@@ -379,12 +420,16 @@ func get_train_catalog() -> Dictionary:
 	return result
 
 
-func get_path_estimate(origin_city_id: String, destination_city_id: String) -> Dictionary:
+func get_path_estimate(origin_city_id: String, destination_city_id: String, train_index: int = 0, cargo_id: String = "coal") -> Dictionary:
 	var result := {
 		"valid": false,
 		"distance_km": 0.0,
 		"revenue_estimate": 0,
 		"maintenance_per_day": 0,
+		"train_capacity_units": 0,
+		"origin_stock": 0,
+		"dest_price": 0.0,
+		"demand_ratio": 1.0,
 	}
 	if not cities_grid.has(origin_city_id) or not cities_grid.has(destination_city_id):
 		return result
@@ -398,10 +443,37 @@ func get_path_estimate(origin_city_id: String, destination_city_id: String) -> D
 
 	result.valid = true
 	result.distance_km = path_result.total_length_km
-	# Revenue estimate: destination current price × 1 ton (rough)
-	var unit_price := get_sell_price(destination_city_id, "coal")
-	result.revenue_estimate = int(unit_price)
+
+	# Train capacity
+	var t: TrainEntity = null
+	if train_index >= 0 and train_index < owned_trains.size():
+		t = owned_trains[train_index]
+	var t_data: TrainData = t.train_data if t != null else null
+	var cargo: CargoData = cargo_catalog.get(cargo_id, null) as CargoData
+	if t_data != null and cargo != null and cargo.weight_per_unit > 0:
+		result.train_capacity_units = int(floorf(t_data.capacity_tons / cargo.weight_per_unit))
+		result.maintenance_per_day = t_data.maintenance_per_day
+
+	# Market data
+	result.dest_price = get_sell_price(destination_city_id, cargo_id)
+	result.revenue_estimate = int(result.train_capacity_units * result.dest_price)
+	result.origin_stock = get_city_stock(origin_city_id, cargo_id)
+
+	var city_data: CityData = city_data_by_id.get(destination_city_id, null) as CityData
+	if city_data != null and cargo != null:
+		var profile: CityCargoProfileData = _find_profile(city_data, cargo_id)
+		if profile != null and profile.target_stock > 0:
+			var dest_stock: int = get_city_stock(destination_city_id, cargo_id)
+			result.demand_ratio = float(dest_stock) / float(profile.target_stock)
+
 	return result
+
+
+func _find_profile(city_data: CityData, cargo_id: String) -> CityCargoProfileData:
+	for profile in city_data.cargo_profiles:
+		if profile != null and profile.cargo_id == cargo_id:
+			return profile
+	return null
 
 
 # ------------------------------------------------------------------------------
@@ -514,9 +586,10 @@ func load_game() -> bool:
 		var hud = $HUD
 		if hud != null and hud.has_method("bind_route_toy"):
 			hud.bind_route_toy(self)
-		# Restart route from safe state
-		if runner != null and runner.get_state_name() == "IDLE":
-			runner.start_route()
+		# Restart all idle routes
+		for r in active_runners:
+			if r != null and r.get_state_name() == "IDLE":
+				r.start_route()
 	else:
 		_show_save_toast("Load Failed")
 	return ok

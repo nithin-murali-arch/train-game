@@ -126,6 +126,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Trips: 0"
 
+[node name="RouteCounterLabel" type="Label" parent="TopBar/TopRightPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Route 0 / 0"
+
 [node name="RightPanel" type="PanelContainer" parent="."]
 anchors_preset = 6
 anchor_top = 0.5
@@ -151,20 +156,20 @@ layout_mode = 2
 text = "Market"
 horizontal_alignment = 1
 
-[node name="KolkataPriceLabel" type="Label" parent="RightPanel/Margin/VBox"]
+[node name="DestPriceLabel" type="Label" parent="RightPanel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Kolkata Coal Price: ₹15"
+text = "Dest Price: —"
 
-[node name="PatnaStockLabel" type="Label" parent="RightPanel/Margin/VBox"]
+[node name="OriginStockLabel" type="Label" parent="RightPanel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Patna Coal Stock: 0"
+text = "Origin Stock: —"
 
-[node name="KolkataStockLabel" type="Label" parent="RightPanel/Margin/VBox"]
+[node name="DestStockLabel" type="Label" parent="RightPanel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Kolkata Coal Stock: 0"
+text = "Dest Stock: —"
 
 [node name="DemandLabel" type="Label" parent="RightPanel/Margin/VBox"]
 unique_name_in_owner = true
@@ -268,6 +273,11 @@ text = "Buy Train"
 unique_name_in_owner = true
 layout_mode = 2
 text = "Create Route"
+
+[node name="NextRouteButton" type="Button" parent="ControlsWidget/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Next Route"
 
 [node name="Spacer" type="Control" parent="ControlsWidget/Margin/VBox"]
 layout_mode = 2

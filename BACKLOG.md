@@ -269,7 +269,7 @@ PRD-00: E04, E05, E06
 
 ---
 
-## Sprint 12 — MVP Productization: Save/Load + Menus + Stabilization 🔄 CURRENT
+## Sprint 12 — MVP Productization: Save/Load + Menus + Stabilization ✅ COMPLETE
 
 **Goal:** Turn the Route Toy into a recoverable MVP. Player can launch from menu, play, save, load, and continue without breaking the economy loop.
 
@@ -332,33 +332,94 @@ PRD-01: E07 Save/Load, E06 Core UI
 
 ---
 
-## Sprint 13 — Player Agency: Track Cost + Train Purchase + Route Creation UI 🔒 LOCKED
+## Sprint 13 — Player Agency: Track Cost + Train Purchase + Route Creation UI + Hardening ✅ COMPLETE
 
 **Goal:** Let the player make meaningful build and buy decisions.
 
 ### Phase Reference
 PRD-01: E03 Track Placement, E04 Train System
 
-### Tasks (Tentative)
-- [-] **PA-01: Track placement UI**
-  - AC: Player can click origin city, click destination city, preview cost, confirm build
-  - AC: Track cost deducted from treasury
+### Tasks — Surface
+- [x] **PA-01: Track placement UI**
+  - AC: Player clicks to build track; preview shows path and cost
+  - AC: Track cost (₹500/km) deducted from treasury
   - AC: Insufficient funds blocks construction
+  - AC: Snaps to nearest city within 32px
 
-- [-] **PA-02: Train purchase UI**
+- [x] **PA-02: Train purchase UI**
   - AC: Player can buy Freight Engine or Mixed Engine
   - AC: Train purchase cost deducted from treasury
-  - AC: New train spawns at selected city
+  - AC: New train spawns at selected city with stable `instance_id`
 
-- [-] **PA-03: Route creation UI**
-  - AC: Player can assign a train to a route (origin, destination, cargo)
-  - AC: Route profitability preview before assignment
+- [x] **PA-03: Route creation UI**
+  - AC: Player assigns train, origin, destination, cargo, loop, return_empty
+  - AC: Route auto-starts on creation
   - AC: Multiple routes can run simultaneously
 
+### Tasks — Hardening
+- [x] **SH-01: Stable instance IDs**
+  - AC: `TrainEntity.instance_id` assigned on purchase (`train_001`, `train_002`, …)
+  - AC: `RouteSchedule.instance_id` + `assigned_train_instance_id` on creation
+  - AC: Maps `train_by_instance_id` and `route_by_instance_id` maintained in `RouteToyPlayable`
+  - AC: Counters `_next_train_instance_id` / `_next_route_instance_id` collision-safe
+
+- [x] **SH-02: Save/Load two-pass deserialize**
+  - AC: Serialize writes `instance_id` and `assigned_train_instance_id`
+  - AC: Deserialize: trains first → build map → routes second with train lookup
+  - AC: Missing assigned train on load → skip route with warning, never crash
+  - AC: Save version stays v2; new fields are optional
+
+- [x] **SH-03: v1 backward compatibility**
+  - AC: v1 saves (no `instance_id`, no `assigned_train_instance_id`) load successfully
+  - AC: Missing train ID → auto-generate `train_migrated_###`
+  - AC: Missing route ID → auto-generate `route_migrated_###`
+  - AC: Missing assignment → fallback to first train with warning
+
+- [x] **SH-04: HUD selected route**
+  - AC: `_selected_route_index` defaults to 0; cycles via Next Route button
+  - AC: Route counter shows "Route X / N"
+  - AC: Route info, city info, and profit stats display selected route only
+  - AC: Signals connected to ALL runners; state changes refresh selected display
+
+- [x] **SH-05: Dynamic HUD city info**
+  - AC: Market labels use selected route's origin/destination/cargo (not hardcoded)
+  - AC: Safe with 0 routes (shows "—")
+
+- [x] **SH-06: Enhanced route creation preview**
+  - AC: Shows train capacity (units), distance, revenue estimate, maintenance/day, net profit
+  - AC: Warns if origin stock < capacity
+  - AC: Warns if destination shortage (high prices) or oversupply (low prices)
+
+- [x] **SH-07: Acceptance tests**
+  - AC: `tests/sprint_13_acceptance.gd` — 7 test suites, all pass
+  - AC: Multi-train purchase with distinct IDs
+  - AC: Multi-route creation with correct train assignments
+  - AC: Save/Load preserves trains, routes, and assignments
+  - AC: HUD queries safe with 0, 1, 2 routes
+  - AC: v1 backward compat still works
+  - AC: Preview returns all expected fields
+
+### Files Added
+- `tests/sprint_13_acceptance.gd`
+
+### Files Modified
+- `src/trains/train_entity.gd` — added `instance_id`
+- `src/routes/route_schedule.gd` — added `instance_id`, `assigned_train_instance_id`
+- `src/game/route_toy_playable.gd` — ID generation, maps, counters, `get_path_estimate()` enhancement
+- `src/save/save_serializer.gd` — two-pass deserialize, v1 compat, ID serialization
+- `src/game/route_toy_hud.gd` — selected route cycling, dynamic city info, signal wiring
+- `scenes/game/route_toy_hud.tscn` — added NextRouteButton, RouteCounterLabel, renamed market labels
+- `src/ui/route_creation_panel.gd` — enhanced preview with capacity, revenue, cost, profit, warnings
+- `scenes/ui/route_creation_panel.tscn` — added WarningsLabel
+
 ### Definition of Done
-- Player can build track, buy trains, and create routes.
-- Route choices have visible economic consequences.
-- No AI, events, contracts, station upgrades.
+- [x] Player can build track, buy multiple trains, and create multiple routes
+- [x] Route choices have visible economic consequences (preview + dynamic HUD)
+- [x] Save/Load preserves multi-train/multi-route state including assignments
+- [x] v1 saves still load correctly
+- [x] HUD safely handles 0, 1, or N routes
+- [x] All acceptance tests pass
+- [x] No AI, events, contracts, station upgrades
 
 ---
 

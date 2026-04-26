@@ -2,6 +2,8 @@ class_name RouteSchedule
 extends RefCounted
 
 
+var instance_id: String = ""                 # Stable runtime route instance ID
+var assigned_train_instance_id: String = ""  # Which train runs this route
 var route_id: String = ""
 var origin_city_id: String = ""
 var destination_city_id: String = ""

@@ -54,6 +54,7 @@ static func serialize(route_toy: RouteToyPlayable) -> SaveGameData:
 			continue
 		var t_data := {}
 		t_data["train_id"] = t.train_id
+		t_data["instance_id"] = t.instance_id
 		var grid_coord := _get_train_grid_coord(t, route_toy)
 		t_data["grid_coord"] = {"x": grid_coord.x, "y": grid_coord.y}
 		var train_cargo: TrainCargo = t.get_train_cargo()
@@ -73,6 +74,8 @@ static func serialize(route_toy: RouteToyPlayable) -> SaveGameData:
 		var sched: RouteSchedule = r._schedule
 		if sched != null:
 			route_dict["schedule"] = {
+				"instance_id": sched.instance_id,
+				"assigned_train_instance_id": sched.assigned_train_instance_id,
 				"route_id": sched.route_id,
 				"origin_city_id": sched.origin_city_id,
 				"destination_city_id": sched.destination_city_id,
@@ -183,7 +186,7 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 			t.queue_free()
 	route_toy.owned_trains.clear()
 
-	# Deserialize trains
+	# Deserialize trains — PASS 1: restore all trains, build instance_id map
 	var train_data_list: Array[Dictionary] = []
 	if data.save_version >= 2:
 		train_data_list = data.trains
@@ -194,6 +197,9 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 			"grid_coord": data.train_grid_coord,
 			"cargo": data.train_cargo,
 		})
+
+	var max_train_id: int = 0
+	var migrated_train_counter: int = 1
 
 	for t_dict in train_data_list:
 		var t_id: String = t_dict.get("train_id", "") as String
@@ -231,9 +237,24 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 				if qty > 0:
 					train_cargo.load_cargo(cargo_id, qty)
 
+		# Assign or migrate instance_id
+		var inst_id: String = t_dict.get("instance_id", "") as String
+		if inst_id.is_empty():
+			inst_id = "train_migrated_%03d" % migrated_train_counter
+			migrated_train_counter += 1
+			t_dict["instance_id"] = inst_id
+			t_dict["_was_migrated"] = true
+		t.instance_id = inst_id
+		route_toy.train_by_instance_id[inst_id] = t
+		max_train_id = maxi(max_train_id, _extract_id_number(inst_id))
+
 		route_toy.owned_trains.append(t)
 
-	# Deserialize routes
+	# Update counter so new trains don't collide with loaded ones
+	if max_train_id > 0:
+		route_toy._next_train_instance_id = max_train_id + 1
+
+	# Deserialize routes — PASS 2: lookup train by assigned_train_instance_id
 	var route_data_list: Array[Dictionary] = []
 	if data.save_version >= 2:
 		route_data_list = data.routes
@@ -244,6 +265,9 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 			"stats": data.route_stats,
 			"runner_state": data.runner_state,
 		})
+
+	var max_route_id: int = 0
+	var migrated_route_counter: int = 1
 
 	for r_dict in route_data_list:
 		var sched_dict: Dictionary = r_dict.get("schedule", {}) as Dictionary
@@ -265,11 +289,30 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 			push_warning("SaveSerializer: no trains to assign route to, skipping route")
 			continue
 
-		# For Sprint 13, always assign route to first train
-		var t: TrainEntity = route_toy.owned_trains[0]
+		# Resolve train assignment
+		var assigned_train_id: String = sched_dict.get("assigned_train_instance_id", "") as String
+		var t: TrainEntity = null
+		if not assigned_train_id.is_empty():
+			t = route_toy.train_by_instance_id.get(assigned_train_id, null) as TrainEntity
+			if t == null:
+				push_warning("SaveSerializer: assigned train '%s' not found, skipping route" % assigned_train_id)
+				continue
+		else:
+			# v1 backward compat: fallback to first train with warning
+			t = route_toy.owned_trains[0]
+			assigned_train_id = t.instance_id
+			push_warning("SaveSerializer: route missing assigned_train_instance_id, falling back to first train '%s' (v1 compat)" % assigned_train_id)
+
 		var t_data: TrainData = t.train_data
 
 		var new_schedule := RouteSchedule.new()
+		# Assign or migrate instance_id
+		var route_inst_id: String = sched_dict.get("instance_id", "") as String
+		if route_inst_id.is_empty():
+			route_inst_id = "route_migrated_%03d" % migrated_route_counter
+			migrated_route_counter += 1
+		new_schedule.instance_id = route_inst_id
+		new_schedule.assigned_train_instance_id = assigned_train_id
 		new_schedule.route_id = sched_dict.get("route_id", "") as String
 		new_schedule.origin_city_id = origin_id
 		new_schedule.destination_city_id = dest_id
@@ -292,6 +335,8 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 		)
 		route_toy.add_child(new_runner)
 		route_toy.active_runners.append(new_runner)
+		route_toy.route_by_instance_id[route_inst_id] = new_runner
+		max_route_id = maxi(max_route_id, _extract_id_number(route_inst_id))
 
 		# Restore stats
 		var stats_dict: Dictionary = r_dict.get("stats", {}) as Dictionary
@@ -314,6 +359,10 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 		else:
 			new_runner.set_state_by_name("IDLE")
 
+	# Update counter so new routes don't collide with loaded ones
+	if max_route_id > 0:
+		route_toy._next_route_instance_id = max_route_id + 1
+
 	# Resume clock if it was running
 	if route_toy.clock != null and not data.clock_is_paused:
 		route_toy.clock.resume()
@@ -324,6 +373,16 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 # ------------------------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------------------------
+
+static func _extract_id_number(instance_id: String) -> int:
+	# Extracts numeric suffix from strings like "train_001", "route_migrated_007"
+	var parts: PackedStringArray = instance_id.split("_")
+	if parts.size() >= 2:
+		var last: String = parts[parts.size() - 1]
+		if last.is_valid_int():
+			return last.to_int()
+	return 0
+
 
 static func _get_train_grid_coord(train: TrainEntity, route_toy: RouteToyPlayable) -> Vector2i:
 	# Prefer current movement coord if available

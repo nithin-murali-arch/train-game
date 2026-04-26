@@ -13,6 +13,7 @@ signal cancelled
 @onready var _loop_check: CheckBox = %LoopCheck
 @onready var _return_empty_check: CheckBox = %ReturnEmptyCheck
 @onready var _estimate_label: Label = %EstimateLabel
+@onready var _warnings_label: Label = %WarningsLabel
 @onready var _create_btn: Button = %CreateButton
 @onready var _cancel_btn: Button = %CancelButton
 
@@ -95,18 +96,38 @@ func _validate_and_update_estimate() -> void:
 		_create_btn.disabled = true
 		return
 
+	var train_idx := _get_selected_train_index()
+
 	# Check path via route_toy
-	var est: Dictionary = _route_toy.get_path_estimate(origin_id, dest_id)
+	var est: Dictionary = _route_toy.get_path_estimate(origin_id, dest_id, train_idx, cargo_id)
 	if not est.valid:
 		_estimate_label.text = "No track connection"
+		_warnings_label.text = ""
 		_create_btn.disabled = true
 		return
 
-	var dest_price: float = _route_toy.get_sell_price(dest_id, cargo_id)
-	var cargo: CargoData = _route_toy.cargo_catalog.get(cargo_id, null) as CargoData
-	var unit_price_str := "₹%.0f" % dest_price
+	var dest_price: float = est.dest_price
+	var capacity: int = est.train_capacity_units
+	var revenue: int = est.revenue_estimate
+	var maintenance: int = est.maintenance_per_day
+	var net: int = revenue - maintenance
 
-	_estimate_label.text = "Distance: %.1f km | Market price: %s" % [est.distance_km, unit_price_str]
+	_estimate_label.text = "Distance: %.1f km | Capacity: %d units\nRevenue: ₹%s | Maint: ₹%s/day | Net: %s₹%s" % [
+		est.distance_km, capacity,
+		_comma_sep(revenue), _comma_sep(maintenance),
+		"+" if net >= 0 else "", _comma_sep(abs(net))
+	]
+
+	# Warnings
+	var warnings: Array[String] = []
+	if est.origin_stock < capacity and capacity > 0:
+		warnings.append("Low stock: only %d available" % est.origin_stock)
+	if est.demand_ratio < 0.8:
+		warnings.append("Shortage: high prices!")
+	elif est.demand_ratio > 1.2:
+		warnings.append("Oversupply: low prices")
+	_warnings_label.text = " | ".join(warnings) if not warnings.is_empty() else ""
+
 	_create_btn.disabled = false
 
 
@@ -154,3 +175,15 @@ func _on_create() -> void:
 func _on_cancel() -> void:
 	cancelled.emit()
 	close()
+
+
+static func _comma_sep(n: int) -> String:
+	var s := str(n)
+	var result := ""
+	var count := 0
+	for i in range(s.length() - 1, -1, -1):
+		if count > 0 and count % 3 == 0:
+			result = "," + result
+		result = s[i] + result
+		count += 1
+	return result

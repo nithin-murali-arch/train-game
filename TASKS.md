@@ -296,7 +296,7 @@
 
 ---
 
-## Sprint 12 — MVP Productization: Save/Load + Menus + Stabilization 🔄 CURRENT
+## Sprint 12 — MVP Productization: Save/Load + Menus + Stabilization ✅ COMPLETE
 
 **Goal:** Turn the Route Toy into a recoverable MVP.
 
@@ -311,21 +311,33 @@
 - [x] MainMenu LoadGameButton enabled if save exists
 - [x] Fix console errors (signal duplicate guard)
 - [x] Debug save/load acceptance test passes
-- [ ] 30-minute playtest session
+- [x] 30-minute playtest session
 
 ---
 
-## Sprint 13 — Player Agency: Track Cost + Train Purchase + Route Creation UI 🔒 LOCKED
+## Sprint 13 — Player Agency: Track Cost + Train Purchase + Route Creation UI + Hardening ✅ COMPLETE
 
 **Goal:** Let the player make meaningful build and buy decisions.
 
-- [ ] Track placement UI (origin → destination → preview → confirm)
-- [ ] Track cost deduction from treasury
-- [ ] Train purchase UI (Freight Engine, Mixed Engine)
-- [ ] Train spawn at selected city
-- [ ] Route creation UI (assign train to origin/destination/cargo)
-- [ ] Route profitability preview
-- [ ] Multiple simultaneous routes
+### Sprint 13 Surface
+- [x] Empty start (no pre-built track, no pre-spawned train)
+- [x] Track placement UI with treasury cost (₹500/km), city snapping
+- [x] Train purchase UI (Freight Engine, Mixed Engine) with city spawn
+- [x] Route creation UI (assign train, origin, destination, cargo, loop, return_empty)
+- [x] Route auto-start on creation
+- [x] Save/Load v2 with `trains[]`/`routes[]` arrays
+- [x] Reset simulation
+- [x] HUD buttons for all player actions
+
+### Sprint 13 Hardening
+- [x] **Stable instance IDs:** `TrainEntity.instance_id` (`train_001`), `RouteSchedule.instance_id` (`route_001`) + `assigned_train_instance_id`
+- [x] **ID maps in RouteToyPlayable:** `train_by_instance_id`, `route_by_instance_id` with collision-safe counters
+- [x] **Save/Load two-pass deserialize:** trains first → build map → routes second with train lookup by `assigned_train_instance_id`
+- [x] **v1 backward compatibility:** missing IDs auto-generate `train_migrated_###` / `route_migrated_###`; missing assignment falls back to first train with warning
+- [x] **HUD selected route:** `_selected_route_index` with cycle button, route counter label ("Route X / N")
+- [x] **Dynamic HUD city info:** labels show selected route's origin/destination/cargo instead of hardcoded Patna/Kolkata/Coal
+- [x] **Enhanced route creation preview:** capacity, revenue estimate, maintenance cost, net profit, warnings (low stock, shortage, oversupply)
+- [x] **Acceptance tests:** `tests/sprint_13_acceptance.gd` — 7 test suites covering multi-train, multi-route, save/load, HUD safety, v1 compat, preview fields
 
 ---
 

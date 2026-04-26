@@ -5,6 +5,7 @@ extends Node2D
 @export var train_data: TrainData
 @export var train_id: String = "debug_train"
 @export var display_name: String = "Debug Train"
+@export var instance_id: String = ""  # Stable runtime instance ID (train_001, etc.)
 
 var _movement: TrainMovement
 var _cargo: TrainCargo
