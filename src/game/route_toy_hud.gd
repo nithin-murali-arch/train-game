@@ -35,7 +35,6 @@ extends CanvasLayer
 @onready var _build_track_btn: Button = %BuildTrackButton
 @onready var _buy_train_btn: Button = %BuyTrainButton
 @onready var _create_route_btn: Button = %CreateRouteButton
-@onready var _next_route_btn: Button = %NextRouteButton
 @onready var _start_btn: Button = %StartButton
 @onready var _pause_resume_btn: Button = %PauseResumeButton
 @onready var _reset_btn: Button = %ResetButton

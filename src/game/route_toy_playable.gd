@@ -157,7 +157,7 @@ func reset_simulation() -> void:
 		placer.set_build_mode(false)
 
 	# Close any open panels
-	var hud = $HUD
+	var hud = get_node_or_null("HUD")
 	if hud != null:
 		if hud.has_method("close_panels"):
 			hud.close_panels()
@@ -303,7 +303,7 @@ func create_route(params: Dictionary) -> bool:
 	])
 
 	# Re-bind HUD signals to the new runner
-	var hud = $HUD
+	var hud = get_node_or_null("HUD")
 	if hud != null and hud.has_method("bind_route_toy"):
 		hud.bind_route_toy(self)
 
@@ -556,7 +556,7 @@ func _auto_start() -> void:
 	clock.start()
 	clock.pause()  # Start paused — player drives the action
 
-	var hud = $HUD
+	var hud = get_node_or_null("HUD")
 	if hud != null and hud.has_method("bind_route_toy"):
 		hud.bind_route_toy(self)
 
@@ -583,7 +583,7 @@ func load_game() -> bool:
 	if ok:
 		_show_save_toast("Game Loaded")
 		# Re-bind HUD signals after load
-		var hud = $HUD
+		var hud = get_node_or_null("HUD")
 		if hud != null and hud.has_method("bind_route_toy"):
 			hud.bind_route_toy(self)
 		# Restart all idle routes
@@ -600,7 +600,7 @@ func _show_toast(message: String) -> void:
 
 
 func _show_save_toast(message: String) -> void:
-	var hud = $HUD
+	var hud = get_node_or_null("HUD")
 	if hud != null and hud.has_method("show_toast"):
 		hud.show_toast(message)
 	else:

@@ -20,6 +20,7 @@ func run_all_tests() -> void:
 	_test_v1_backward_compat()
 	_test_route_creation_preview()
 	print("=== Results: %d passed, %d failed ===" % [_pass_count, _fail_count])
+	get_tree().quit(_fail_count)
 
 
 func _assert(condition: bool, message: String) -> void:
