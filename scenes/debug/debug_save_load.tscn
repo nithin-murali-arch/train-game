@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/game/route_toy_playable.tscn" id="1_route"]
+[ext_resource type="Script" path="res://src/debug/debug_save_load.gd" id="2_debug"]
+
+[node name="DebugSaveLoad" type="Node"]
+script = ExtResource("2_debug")
+
+[node name="RouteToyPlayable" parent="." instance=ExtResource("1_route")]

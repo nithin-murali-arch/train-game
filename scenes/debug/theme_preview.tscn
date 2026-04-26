@@ -1,0 +1,102 @@
+[gd_scene format=3]
+
+[sub_resource type="SystemFont" id="SystemFont_fthag"]
+font_names = PackedStringArray("Noto Sans", "Arial", "Helvetica", "Sans-Serif")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yfknw"]
+bg_color = Color(0.83137256, 0.6862745, 0.21568628, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fg8is"]
+bg_color = Color(0.72156864, 0.5254902, 0.043137256, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r5qd1"]
+bg_color = Color(0.54509807, 0.39607844, 0.03137255, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kl36r"]
+bg_color = Color(0.9098039, 0.85490197, 0.7176471, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ovbl3"]
+bg_color = Color(0.9607843, 0.9019608, 0.78431374, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="Theme" id="Theme_fwhjj"]
+default_font = SubResource("SystemFont_fthag")
+default_font_size = 16
+Button/colors/font_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+Button/fonts/font = SubResource("SystemFont_fthag")
+Button/styles/hover = SubResource("StyleBoxFlat_yfknw")
+Button/styles/normal = SubResource("StyleBoxFlat_fg8is")
+Button/styles/pressed = SubResource("StyleBoxFlat_r5qd1")
+Label/fonts/font = SubResource("SystemFont_fthag")
+Panel/styles/panel = SubResource("StyleBoxFlat_kl36r")
+PanelContainer/styles/panel = SubResource("StyleBoxFlat_ovbl3")
+
+[sub_resource type="SystemFont" id="SystemFont_oqvy0"]
+font_names = PackedStringArray("Noto Serif", "Georgia", "Times New Roman", "Serif")
+
+[node name="ThemePreview" type="Control" unique_id=915342490]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = SubResource("Theme_fwhjj")
+
+[node name="@ColorRect@23" type="ColorRect" parent="." unique_id=462501456]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.9607843, 0.9019608, 0.78431374, 1)
+
+[node name="@CenterContainer@24" type="CenterContainer" parent="." unique_id=876207188]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="@PanelContainer@25" type="PanelContainer" parent="@CenterContainer@24" unique_id=2113452360]
+layout_mode = 2
+
+[node name="@VBoxContainer@26" type="VBoxContainer" parent="@CenterContainer@24/@PanelContainer@25" unique_id=1956209819]
+layout_mode = 2
+
+[node name="@Label@27" type="Label" parent="@CenterContainer@24/@PanelContainer@25/@VBoxContainer@26" unique_id=811361763]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_oqvy0")
+theme_override_font_sizes/font_size = 24
+text = "Heading Example"
+
+[node name="@Label@28" type="Label" parent="@CenterContainer@24/@PanelContainer@25/@VBoxContainer@26" unique_id=1615999043]
+layout_mode = 2
+text = "Body text example."
+
+[node name="@Button@29" type="Button" parent="@CenterContainer@24/@PanelContainer@25/@VBoxContainer@26" unique_id=843875595]
+layout_mode = 2
+text = "Normal Button"
+
+[node name="@Button@30" type="Button" parent="@CenterContainer@24/@PanelContainer@25/@VBoxContainer@26" unique_id=804288680]
+layout_mode = 2
+disabled = true
+text = "Disabled Button"

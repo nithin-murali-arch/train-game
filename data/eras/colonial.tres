@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EraData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/resources/era_data.gd" id="1_colonial"]
+
+[resource]
+script = ExtResource("1_colonial")
+era_id = "colonial"
+display_name = "Colonial"
+start_year = 1857
+end_year = 1914
+available_cargo_ids = ["coal", "textiles", "grain"]
+available_train_ids = ["freight_engine", "mixed_engine"]
+available_faction_ids = ["player_railway_company"]
+maintenance_multiplier = 1.0
+pricing_multiplier = 1.0
+ui_theme_id = "colonial"
+era_modifiers = []

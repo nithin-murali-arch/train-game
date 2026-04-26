@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://debugtrainmovement05"]
+
+[ext_resource type="Script" path="res://src/debug/debug_train_movement.gd" id="1_debug"]
+
+[node name="DebugTrainMovement" type="Node"]
+script = ExtResource("1_debug")

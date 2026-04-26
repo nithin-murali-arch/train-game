@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="CityData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/resources/city_data.gd" id="1_citydata"]
+[ext_resource type="Script" path="res://src/resources/city_cargo_profile_data.gd" id="2_profile"]
+
+[sub_resource type="Resource" id="profile_grain"]
+script = ExtResource("2_profile")
+cargo_id = "grain"
+production_per_day = 80
+demand_per_day = 0
+starting_stock = 500
+target_stock = 400
+max_stock = 1000
+
+[sub_resource type="Resource" id="profile_textiles"]
+script = ExtResource("2_profile")
+cargo_id = "textiles"
+production_per_day = 0
+demand_per_day = 25
+starting_stock = 60
+target_stock = 150
+max_stock = 500
+
+[sub_resource type="Resource" id="profile_coal"]
+script = ExtResource("2_profile")
+cargo_id = "coal"
+production_per_day = 0
+demand_per_day = 20
+starting_stock = 40
+target_stock = 150
+max_stock = 500
+
+[resource]
+script = ExtResource("1_citydata")
+city_id = "murshidabad"
+display_name = "Murshidabad"
+role = "Agricultural Town"
+map_position = Vector2i(17, 22)
+population_tier = "small"
+tags = ["agricultural", "grain"]
+cargo_profiles = [SubResource("profile_grain"), SubResource("profile_textiles"), SubResource("profile_coal")]
+special_modifiers = []

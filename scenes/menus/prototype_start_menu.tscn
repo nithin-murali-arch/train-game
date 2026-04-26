@@ -1,0 +1,100 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/menus/PrototypeStartMenu.gd" id="1_xl2th"]
+
+[sub_resource type="SystemFont" id="SystemFont_fthag"]
+font_names = PackedStringArray("Noto Sans", "Arial", "Helvetica", "Sans-Serif")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yfknw"]
+bg_color = Color(0.83137256, 0.6862745, 0.21568628, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fg8is"]
+bg_color = Color(0.72156864, 0.5254902, 0.043137256, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r5qd1"]
+bg_color = Color(0.54509807, 0.39607844, 0.03137255, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kl36r"]
+bg_color = Color(0.9098039, 0.85490197, 0.7176471, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ovbl3"]
+bg_color = Color(0.9607843, 0.9019608, 0.78431374, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="Theme" id="Theme_fwhjj"]
+default_font = SubResource("SystemFont_fthag")
+default_font_size = 16
+Button/colors/font_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+Button/fonts/font = SubResource("SystemFont_fthag")
+Button/styles/hover = SubResource("StyleBoxFlat_yfknw")
+Button/styles/normal = SubResource("StyleBoxFlat_fg8is")
+Button/styles/pressed = SubResource("StyleBoxFlat_r5qd1")
+Label/fonts/font = SubResource("SystemFont_fthag")
+Panel/styles/panel = SubResource("StyleBoxFlat_kl36r")
+PanelContainer/styles/panel = SubResource("StyleBoxFlat_ovbl3")
+
+[sub_resource type="SystemFont" id="SystemFont_oqvy0"]
+font_names = PackedStringArray("Noto Serif", "Georgia", "Times New Roman", "Serif")
+
+[node name="PrototypeStartMenu" type="Control" unique_id=831507939]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = SubResource("Theme_fwhjj")
+script = ExtResource("1_xl2th")
+
+[node name="@ColorRect@6" type="ColorRect" parent="." unique_id=2011908330]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.9098039, 0.85490197, 0.7176471, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1925749958]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PanelContainer" type="PanelContainer" parent="CenterContainer" unique_id=998409591]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer" unique_id=2128785589]
+layout_mode = 2
+
+[node name="@Label@7" type="Label" parent="CenterContainer/PanelContainer/VBoxContainer" unique_id=184419628]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_oqvy0")
+theme_override_font_sizes/font_size = 32
+text = "Colonial Bengal"
+
+[node name="BeginButton" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer" unique_id=478526110]
+layout_mode = 2
+text = "Begin Prototype"
+
+[node name="BackButton" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer" unique_id=276078162]
+layout_mode = 2
+text = "Back"

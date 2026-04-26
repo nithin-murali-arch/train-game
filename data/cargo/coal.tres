@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CargoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/resources/cargo_data.gd" id="1_coal"]
+
+[resource]
+script = ExtResource("1_coal")
+cargo_id = "coal"
+display_name = "Coal"
+description = "Bulk fuel cargo used by ports, industry, and rail operations."
+category = "bulk"
+base_price = 15.0
+weight_per_unit = 1.0
+volume_per_unit = 1.0
+compatible_train_tags = ["freight", "mixed"]
+is_passenger = false

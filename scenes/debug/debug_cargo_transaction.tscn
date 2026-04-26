@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://debugcargotransaction0607"]
+
+[ext_resource type="Script" path="res://src/debug/debug_cargo_transaction.gd" id="1_debug"]
+
+[node name="DebugCargoTransaction" type="Node"]
+script = ExtResource("1_debug")

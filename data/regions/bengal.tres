@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="RegionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/resources/region_data.gd" id="1_bengal"]
+
+[resource]
+script = ExtResource("1_bengal")
+region_id = "bengal"
+display_name = "Bengal Presidency"
+era_id = "colonial"
+city_ids = ["kolkata", "dacca", "patna", "murshidabad"]
+starting_city_id = "kolkata"
+terrain_seed = 1857
+map_width = 64
+map_height = 64
+climate_tags = ["monsoon", "river_delta", "humid"]
+terrain_profile = []
+regional_modifiers = []
+neighboring_region_ids = []

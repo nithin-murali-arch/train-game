@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TrainData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/resources/train_data.gd" id="1_freight"]
+
+[resource]
+script = ExtResource("1_freight")
+train_id = "freight_engine"
+display_name = "Freight Engine"
+description = "Slow, affordable engine with high bulk cargo capacity."
+cost = 5000
+speed_km_per_tick = 2.0
+capacity_tons = 200
+maintenance_per_day = 50
+train_tags = ["freight"]

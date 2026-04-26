@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="CityData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/resources/city_data.gd" id="1_citydata"]
+[ext_resource type="Script" path="res://src/resources/city_cargo_profile_data.gd" id="2_profile"]
+
+[sub_resource type="Resource" id="profile_textiles"]
+script = ExtResource("2_profile")
+cargo_id = "textiles"
+production_per_day = 40
+demand_per_day = 0
+starting_stock = 300
+target_stock = 250
+max_stock = 800
+
+[sub_resource type="Resource" id="profile_coal"]
+script = ExtResource("2_profile")
+cargo_id = "coal"
+production_per_day = 0
+demand_per_day = 60
+starting_stock = 30
+target_stock = 200
+max_stock = 700
+
+[sub_resource type="Resource" id="profile_grain"]
+script = ExtResource("2_profile")
+cargo_id = "grain"
+production_per_day = 0
+demand_per_day = 30
+starting_stock = 80
+target_stock = 200
+max_stock = 600
+
+[resource]
+script = ExtResource("1_citydata")
+city_id = "dacca"
+display_name = "Dacca"
+role = "Industrial City"
+map_position = Vector2i(22, 14)
+population_tier = "medium"
+tags = ["industrial", "textiles"]
+cargo_profiles = [SubResource("profile_textiles"), SubResource("profile_coal"), SubResource("profile_grain")]
+special_modifiers = []

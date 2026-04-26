@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="CityData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/resources/city_data.gd" id="1_citydata"]
+[ext_resource type="Script" path="res://src/resources/city_cargo_profile_data.gd" id="2_profile"]
+
+[sub_resource type="Resource" id="profile_coal"]
+script = ExtResource("2_profile")
+cargo_id = "coal"
+production_per_day = 100
+demand_per_day = 0
+starting_stock = 600
+target_stock = 500
+max_stock = 1200
+
+[sub_resource type="Resource" id="profile_textiles"]
+script = ExtResource("2_profile")
+cargo_id = "textiles"
+production_per_day = 0
+demand_per_day = 40
+starting_stock = 80
+target_stock = 200
+max_stock = 600
+
+[sub_resource type="Resource" id="profile_grain"]
+script = ExtResource("2_profile")
+cargo_id = "grain"
+production_per_day = 0
+demand_per_day = 30
+starting_stock = 100
+target_stock = 200
+max_stock = 600
+
+[resource]
+script = ExtResource("1_citydata")
+city_id = "patna"
+display_name = "Patna"
+role = "Mining Center"
+map_position = Vector2i(36, 18)
+population_tier = "medium"
+tags = ["mining", "coal"]
+cargo_profiles = [SubResource("profile_coal"), SubResource("profile_textiles"), SubResource("profile_grain")]
+special_modifiers = []

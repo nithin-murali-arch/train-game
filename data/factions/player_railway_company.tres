@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FactionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/resources/faction_data.gd" id="1_player"]
+
+[resource]
+script = ExtResource("1_player")
+faction_id = "player_railway_company"
+display_name = "Player Railway Company"
+description = "A newly chartered railway company attempting to build a profitable Bengal rail network."
+color = Color(0.294117659330368, 0.0, 0.50980395078659, 1)
+starting_capital = 50000
+bonus_values = []
+ai_personality = "none"
+is_player_selectable = true

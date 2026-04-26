@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="CityData" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/resources/city_data.gd" id="1_citydata"]
+[ext_resource type="Script" path="res://src/resources/city_cargo_profile_data.gd" id="2_profile"]
+[ext_resource type="Script" path="res://src/resources/modifier_value_data.gd" id="3_modifier"]
+
+[sub_resource type="Resource" id="profile_textiles"]
+script = ExtResource("2_profile")
+cargo_id = "textiles"
+production_per_day = 50
+demand_per_day = 0
+starting_stock = 500
+target_stock = 300
+max_stock = 1000
+export_priority = 1.2
+
+[sub_resource type="Resource" id="profile_coal"]
+script = ExtResource("2_profile")
+cargo_id = "coal"
+production_per_day = 0
+demand_per_day = 80
+starting_stock = 40
+target_stock = 300
+max_stock = 900
+import_priority = 1.2
+
+[sub_resource type="Resource" id="profile_grain"]
+script = ExtResource("2_profile")
+cargo_id = "grain"
+production_per_day = 0
+demand_per_day = 35
+starting_stock = 90
+target_stock = 200
+max_stock = 700
+
+[sub_resource type="Resource" id="modifier_port"]
+script = ExtResource("3_modifier")
+modifier_id = "port_export_bonus"
+target = "export_price"
+operation = "percent_add"
+value = 0.2
+description = "Port city export demand increases sale prices for suitable cargo."
+
+[resource]
+script = ExtResource("1_citydata")
+city_id = "kolkata"
+display_name = "Kolkata"
+role = "Port Metropolis"
+map_position = Vector2i(10, 10)
+population_tier = "large"
+tags = ["port", "metropolis", "export_hub"]
+cargo_profiles = [SubResource("profile_textiles"), SubResource("profile_coal"), SubResource("profile_grain")]
+special_modifiers = [SubResource("modifier_port")]

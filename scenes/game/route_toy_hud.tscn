@@ -1,0 +1,295 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Theme" path="res://assets/theme/governor_archive.tres" id="1_theme"]
+[ext_resource type="Script" path="res://src/game/route_toy_hud.gd" id="2_script"]
+[ext_resource type="PackedScene" path="res://scenes/ui/train_purchase_panel.tscn" id="3_train_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/route_creation_panel.tscn" id="4_route_panel"]
+
+[node name="RouteToyHUD" type="CanvasLayer"]
+script = ExtResource("2_script")
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 60.0
+alignment = 1
+
+[node name="TopLeftPanel" type="PanelContainer" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Margin" type="MarginContainer" parent="TopBar/TopLeftPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="TopBar/TopLeftPanel/Margin"]
+layout_mode = 2
+
+[node name="CompanyLabel" type="Label" parent="TopBar/TopLeftPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Bengal Railway Company"
+
+[node name="TreasuryLabel" type="Label" parent="TopBar/TopLeftPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Treasury: ₹20,000"
+
+[node name="DateLabel" type="Label" parent="TopBar/TopLeftPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Date: 1/1/1857"
+
+[node name="TopCenterPanel" type="PanelContainer" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Margin" type="MarginContainer" parent="TopBar/TopCenterPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="TopBar/TopCenterPanel/Margin"]
+layout_mode = 2
+alignment = 1
+
+[node name="SpeedLabel" type="Label" parent="TopBar/TopCenterPanel/Margin/VBox"]
+layout_mode = 2
+text = "Speed"
+horizontal_alignment = 1
+
+[node name="SpeedRow" type="HBoxContainer" parent="TopBar/TopCenterPanel/Margin/VBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="PauseButton" type="Button" parent="TopBar/TopCenterPanel/Margin/VBox/SpeedRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Pause"
+
+[node name="Speed1xButton" type="Button" parent="TopBar/TopCenterPanel/Margin/VBox/SpeedRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "1x"
+
+[node name="Speed2xButton" type="Button" parent="TopBar/TopCenterPanel/Margin/VBox/SpeedRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "2x"
+
+[node name="Speed4xButton" type="Button" parent="TopBar/TopCenterPanel/Margin/VBox/SpeedRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "4x"
+
+[node name="AdvanceDayButton" type="Button" parent="TopBar/TopCenterPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Advance Day"
+
+[node name="TopRightPanel" type="PanelContainer" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Margin" type="MarginContainer" parent="TopBar/TopRightPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="TopBar/TopRightPanel/Margin"]
+layout_mode = 2
+
+[node name="RouteStatusLabel" type="Label" parent="TopBar/TopRightPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Status: IDLE"
+
+[node name="RouteNameLabel" type="Label" parent="TopBar/TopRightPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Route: Patna → Kolkata"
+
+[node name="CargoLabel" type="Label" parent="TopBar/TopRightPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cargo: Coal"
+
+[node name="TripsLabel" type="Label" parent="TopBar/TopRightPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Trips: 0"
+
+[node name="RightPanel" type="PanelContainer" parent="."]
+anchors_preset = 6
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 1640.0
+offset_top = -150.0
+offset_right = 1900.0
+offset_bottom = 150.0
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="RightPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="RightPanel/Margin"]
+layout_mode = 2
+
+[node name="MarketTitle" type="Label" parent="RightPanel/Margin/VBox"]
+layout_mode = 2
+text = "Market"
+horizontal_alignment = 1
+
+[node name="KolkataPriceLabel" type="Label" parent="RightPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Kolkata Coal Price: ₹15"
+
+[node name="PatnaStockLabel" type="Label" parent="RightPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Patna Coal Stock: 0"
+
+[node name="KolkataStockLabel" type="Label" parent="RightPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Kolkata Coal Stock: 0"
+
+[node name="DemandLabel" type="Label" parent="RightPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Demand: Balanced"
+
+[node name="ProfitWidget" type="PanelContainer" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = -140.0
+offset_right = 300.0
+offset_bottom = -20.0
+grow_horizontal = 2
+
+[node name="Margin" type="MarginContainer" parent="ProfitWidget"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="ProfitWidget/Margin"]
+layout_mode = 2
+
+[node name="ProfitTitle" type="Label" parent="ProfitWidget/Margin/VBox"]
+layout_mode = 2
+text = "Route Profit"
+horizontal_alignment = 1
+
+[node name="LastRow" type="HBoxContainer" parent="ProfitWidget/Margin/VBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="LastRevenueLabel" type="Label" parent="ProfitWidget/Margin/VBox/LastRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Last Revenue: ₹0"
+
+[node name="LastCostLabel" type="Label" parent="ProfitWidget/Margin/VBox/LastRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Last Cost: ₹0"
+
+[node name="LastProfitLabel" type="Label" parent="ProfitWidget/Margin/VBox/LastRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Last Profit: ₹0"
+
+[node name="TotalRow" type="HBoxContainer" parent="ProfitWidget/Margin/VBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="TotalRevenueLabel" type="Label" parent="ProfitWidget/Margin/VBox/TotalRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Total Revenue: ₹0"
+
+[node name="TotalCostLabel" type="Label" parent="ProfitWidget/Margin/VBox/TotalRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Total Cost: ₹0"
+
+[node name="TotalProfitLabel" type="Label" parent="ProfitWidget/Margin/VBox/TotalRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Total Profit: ₹0"
+
+[node name="ControlsWidget" type="PanelContainer" parent="."]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 20.0
+offset_top = 760.0
+offset_right = 180.0
+offset_bottom = 1060.0
+
+[node name="Margin" type="MarginContainer" parent="ControlsWidget"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="ControlsWidget/Margin"]
+layout_mode = 2
+
+[node name="BuildTrackButton" type="Button" parent="ControlsWidget/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Build Track"
+
+[node name="BuyTrainButton" type="Button" parent="ControlsWidget/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Buy Train"
+
+[node name="CreateRouteButton" type="Button" parent="ControlsWidget/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Create Route"
+
+[node name="Spacer" type="Control" parent="ControlsWidget/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StartButton" type="Button" parent="ControlsWidget/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Start Route"
+
+[node name="PauseResumeButton" type="Button" parent="ControlsWidget/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Pause"
+
+[node name="ResetButton" type="Button" parent="ControlsWidget/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Reset"
+
+[node name="TrainPurchasePanel" parent="." instance=ExtResource("3_train_panel")]
+unique_name_in_owner = true
+
+[node name="RouteCreationPanel" parent="." instance=ExtResource("4_route_panel")]
+unique_name_in_owner = true

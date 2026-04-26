@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/game/route_toy_playable.tscn" id="1_playable"]
+[ext_resource type="Script" path="res://scenes/debug/sprint_13_acceptance.gd" id="2_script"]
+
+[node name="Sprint13Acceptance" type="Node"]
+script = ExtResource("2_script")
+
+[node name="RouteToyPlayable" parent="." instance=ExtResource("1_playable")]

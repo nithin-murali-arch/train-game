@@ -1,0 +1,117 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/menus/SettingsShell.gd" id="1_ufuun"]
+
+[sub_resource type="SystemFont" id="SystemFont_fthag"]
+font_names = PackedStringArray("Noto Sans", "Arial", "Helvetica", "Sans-Serif")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yfknw"]
+bg_color = Color(0.83137256, 0.6862745, 0.21568628, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fg8is"]
+bg_color = Color(0.72156864, 0.5254902, 0.043137256, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r5qd1"]
+bg_color = Color(0.54509807, 0.39607844, 0.03137255, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kl36r"]
+bg_color = Color(0.9098039, 0.85490197, 0.7176471, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ovbl3"]
+bg_color = Color(0.9607843, 0.9019608, 0.78431374, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+
+[sub_resource type="Theme" id="Theme_fwhjj"]
+default_font = SubResource("SystemFont_fthag")
+default_font_size = 16
+Button/colors/font_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+Button/fonts/font = SubResource("SystemFont_fthag")
+Button/styles/hover = SubResource("StyleBoxFlat_yfknw")
+Button/styles/normal = SubResource("StyleBoxFlat_fg8is")
+Button/styles/pressed = SubResource("StyleBoxFlat_r5qd1")
+Label/fonts/font = SubResource("SystemFont_fthag")
+Panel/styles/panel = SubResource("StyleBoxFlat_kl36r")
+PanelContainer/styles/panel = SubResource("StyleBoxFlat_ovbl3")
+
+[sub_resource type="SystemFont" id="SystemFont_oqvy0"]
+font_names = PackedStringArray("Noto Serif", "Georgia", "Times New Roman", "Serif")
+
+[node name="SettingsShell" type="Control" unique_id=2062572329]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = SubResource("Theme_fwhjj")
+script = ExtResource("1_ufuun")
+
+[node name="@ColorRect@8" type="ColorRect" parent="." unique_id=955686581]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.9607843, 0.9019608, 0.78431374, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1317373562]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 64
+theme_override_constants/margin_top = 64
+theme_override_constants/margin_right = 64
+theme_override_constants/margin_bottom = 64
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1805299064]
+layout_mode = 2
+
+[node name="@Label@9" type="Label" parent="MarginContainer/VBoxContainer" unique_id=616053372]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_oqvy0")
+theme_override_font_sizes/font_size = 32
+text = "Settings"
+
+[node name="@TabContainer@12" type="TabContainer" parent="MarginContainer/VBoxContainer" unique_id=597580497]
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="Audio" type="MarginContainer" parent="MarginContainer/VBoxContainer/@TabContainer@12" unique_id=440507067]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="Video" type="MarginContainer" parent="MarginContainer/VBoxContainer/@TabContainer@12" unique_id=1614827921]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="Gameplay" type="MarginContainer" parent="MarginContainer/VBoxContainer/@TabContainer@12" unique_id=499004147]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="BackButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=920374746]
+layout_mode = 2
+text = "Back"

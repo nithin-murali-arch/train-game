@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TrainData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/resources/train_data.gd" id="1_mixed"]
+
+[resource]
+script = ExtResource("1_mixed")
+train_id = "mixed_engine"
+display_name = "Mixed Engine"
+description = "Faster, more expensive engine suited for flexible cargo routes."
+cost = 10000
+speed_km_per_tick = 4.0
+capacity_tons = 100
+maintenance_per_day = 80
+train_tags = ["mixed", "freight"]

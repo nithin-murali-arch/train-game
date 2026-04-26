@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://sprint0607acceptance"]
+
+[ext_resource type="Script" path="res://src/debug/sprint_06_07_acceptance.gd" id="1_acceptance"]
+
+[node name="Sprint0607Acceptance" type="Node"]
+script = ExtResource("1_acceptance")
