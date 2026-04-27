@@ -31,6 +31,11 @@ var _cargo_catalog: Dictionary
 var _stats: RouteProfitStats
 var _get_maintenance_discount_cb: Callable = Callable()
 
+var _faction_id: String = "player_railway_company"
+var _faction_manager: FactionManager = null
+var _delivery_ledger: DeliveryLedger = null
+var _current_abs_day: int = 0
+
 var _origin_grid: Vector2i
 var _destination_grid: Vector2i
 var _current_trip_loaded: int = 0
@@ -50,7 +55,10 @@ func setup(
 	destination_data: CityData,
 	treasury: TreasuryState,
 	cargo_catalog: Dictionary,
-	get_maintenance_discount_cb: Callable = Callable()
+	get_maintenance_discount_cb: Callable = Callable(),
+	faction_id: String = "player_railway_company",
+	faction_manager: FactionManager = null,
+	delivery_ledger: DeliveryLedger = null
 ) -> void:
 	_schedule = schedule
 	_train = train
@@ -63,6 +71,9 @@ func setup(
 	_treasury = treasury
 	_cargo_catalog = cargo_catalog
 	_get_maintenance_discount_cb = get_maintenance_discount_cb
+	_faction_id = faction_id
+	_faction_manager = faction_manager
+	_delivery_ledger = delivery_ledger
 
 	_origin_grid = origin_runtime.grid_coord
 	_destination_grid = destination_runtime.grid_coord
@@ -167,6 +178,11 @@ func _attempt_load() -> void:
 
 
 func _start_movement(from: Vector2i, to: Vector2i) -> void:
+	var path_result := _graph.find_path(from, to, _faction_id)
+	if not path_result.success:
+		_print_failure("no path from %s to %s" % [from, to])
+		return
+
 	var ok := _train.set_route(from, to)
 	if not ok:
 		_print_failure("no path from %s to %s" % [from, to])
@@ -221,6 +237,22 @@ func _process_unloading() -> void:
 		_treasury.add(_current_trip_revenue)
 		print("Sold %s: %d × ₹%.0f = ₹%d" % [_schedule.cargo_id, unloaded, unit_price, _current_trip_revenue])
 
+	# 3.5. Pay tolls for using other factions' tracks
+	var path_result := _graph.find_path(_origin_grid, _destination_grid, _faction_id)
+	var path_coords := path_result.coords
+	var toll := _graph.calculate_path_toll(path_coords, _faction_id)
+	if toll > 0 and _faction_manager != null:
+		if _faction_manager.can_afford(_faction_id, toll):
+			_faction_manager.spend_money(_faction_id, toll)
+			var edges := _graph.get_edges_between(path_coords)
+			for edge in edges:
+				if edge.owner_faction_id != _faction_id and edge.access_mode == "open":
+					_faction_manager.add_money(edge.owner_faction_id, int(edge.length_km * edge.toll_per_km))
+		else:
+			print("INSUFFICIENT FUNDS: Cannot pay toll ₹%d" % toll)
+			_print_failure("insufficient funds for toll")
+			return
+
 	# 4. Deduct maintenance/operating cost
 	var operating_cost := _train_data.maintenance_per_day
 	if _get_maintenance_discount_cb.is_valid():
@@ -260,6 +292,14 @@ func _process_unloading() -> void:
 func _process_returning() -> void:
 	# Movement handled by TrainMovement
 	pass
+
+
+func set_current_day(day: int, month: int, year: int) -> void:
+	_current_abs_day = ((year - 1857) * 360) + ((month - 1) * 30) + day
+
+
+func get_faction_id() -> String:
+	return _faction_id
 
 
 func set_state_by_name(state_name: String) -> void:

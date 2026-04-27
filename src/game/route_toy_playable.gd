@@ -35,6 +35,14 @@ var reputation: int = 0
 var contract_manager: ContractManager
 var station_upgrades: Dictionary = {}  # city_id -> StationUpgradeState
 
+# Sprint 15: Faction & AI systems
+var faction_manager: FactionManager = null
+var delivery_ledger: DeliveryLedger = null
+var market_share: MarketShareSystem = null
+var baron_ai: BaronAI = null
+var ai_trains: Array[TrainEntity] = []
+var ai_runners: Array[RouteRunner] = []
+
 var train_data: TrainData
 var pathfinder: TrainPathfinder
 
@@ -68,6 +76,8 @@ func _ready() -> void:
 	_setup_economy()
 	_setup_track_placer()
 	_setup_contracts()
+	_setup_faction_systems()
+	_setup_baron_ai()
 	_setup_station_upgrades()
 
 	_auto_start()
@@ -142,6 +152,21 @@ func reset_simulation() -> void:
 	train_by_instance_id.clear()
 	_next_train_instance_id = 1
 
+	# Stop and remove all AI runners
+	for r in ai_runners:
+		if r != null:
+			r.stop_route()
+			r.queue_free()
+	ai_runners.clear()
+
+	# Remove all AI trains
+	for t in ai_trains:
+		if t != null:
+			if t.get_parent() != null:
+				t.get_parent().remove_child(t)
+			t.queue_free()
+	ai_trains.clear()
+
 	# Clear graph
 	if graph != null:
 		graph.clear()
@@ -158,6 +183,8 @@ func reset_simulation() -> void:
 	# Reset economy/cities/treasury
 	_setup_cities_runtime()
 	_setup_treasury()
+	_setup_faction_systems()
+	_setup_baron_ai()
 
 	# Reset Sprint 14 state
 	reputation = 0
@@ -204,7 +231,7 @@ func purchase_train(train_id: String, city_id: String) -> bool:
 		_show_toast("Unknown train type")
 		return false
 
-	if not treasury.can_afford(t_data.cost):
+	if faction_manager == null or not faction_manager.can_afford(FactionManager.FACTION_PLAYER, t_data.cost):
 		_show_toast("Insufficient funds — need ₹%s" % _comma_sep(t_data.cost))
 		return false
 
@@ -212,7 +239,8 @@ func purchase_train(train_id: String, city_id: String) -> bool:
 		_show_toast("Unknown city: %s" % city_id)
 		return false
 
-	treasury.spend(t_data.cost)
+	faction_manager.spend_money(FactionManager.FACTION_PLAYER, t_data.cost)
+	# treasury is the same object reference, already in sync
 
 	# Create pathfinder (shared per train, but each train needs its own)
 	var pf := TrainPathfinder.new()
@@ -300,7 +328,10 @@ func create_route(params: Dictionary) -> bool:
 		city_data_by_id[destination_id],
 		treasury,
 		cargo_catalog,
-		get_maintenance_discount_for_city
+		get_maintenance_discount_for_city,
+		FactionManager.FACTION_PLAYER,
+		faction_manager,
+		delivery_ledger
 	)
 	add_child(new_runner)
 	active_runners.append(new_runner)
@@ -327,6 +358,36 @@ func create_route(params: Dictionary) -> bool:
 		hud.bind_route_toy(self)
 
 	return true
+
+
+func create_ai_route(schedule: RouteSchedule, train: TrainEntity, train_data: TrainData) -> RouteRunner:
+	if not city_runtime.has(schedule.origin_city_id) or not city_runtime.has(schedule.destination_city_id):
+		return null
+
+	var new_runner := RouteRunner.new()
+	new_runner.setup(
+		schedule,
+		train,
+		train_data,
+		graph,
+		city_runtime[schedule.origin_city_id],
+		city_runtime[schedule.destination_city_id],
+		city_data_by_id[schedule.origin_city_id],
+		city_data_by_id[schedule.destination_city_id],
+		faction_manager.get_treasury_for_faction(FactionManager.FACTION_BRITISH),
+		cargo_catalog,
+		get_maintenance_discount_for_city,
+		FactionManager.FACTION_BRITISH,
+		faction_manager,
+		delivery_ledger
+	)
+	add_child(new_runner)
+	ai_runners.append(new_runner)
+
+	# Connect trip tracking
+	new_runner.trip_completed.connect(_on_trip_completed)
+
+	return new_runner
 
 
 # ------------------------------------------------------------------------------
@@ -488,6 +549,30 @@ func get_path_estimate(origin_city_id: String, destination_city_id: String, trai
 	return result
 
 
+func get_british_treasury_balance() -> int:
+	if faction_manager == null:
+		return 0
+	return faction_manager.get_balance(FactionManager.FACTION_BRITISH)
+
+
+func get_player_market_share() -> float:
+	if market_share == null:
+		return 0.0
+	return market_share.get_overall_market_share(FactionManager.FACTION_PLAYER)
+
+
+func get_city_market_share(city_id: String) -> float:
+	if market_share == null:
+		return 0.0
+	return market_share.get_city_market_share(city_id, FactionManager.FACTION_PLAYER)
+
+
+func get_ai_state_name() -> String:
+	if baron_ai == null:
+		return "No AI"
+	return baron_ai.get_state_name()
+
+
 func _find_profile(city_data: CityData, cargo_id: String) -> CityCargoProfileData:
 	for profile in city_data.cargo_profiles:
 		if profile != null and profile.cargo_id == cargo_id:
@@ -539,7 +624,21 @@ func _setup_cities_runtime() -> void:
 func _setup_treasury() -> void:
 	var faction: FactionData = _catalog.get_faction_by_id("player_railway_company")
 	_starting_capital = faction.starting_capital if faction != null else 50000
-	treasury = TreasuryState.new(_starting_capital)
+	faction_manager = FactionManager.new()
+	faction_manager.setup(_starting_capital, 50000)
+	treasury = faction_manager.get_treasury_for_faction(FactionManager.FACTION_PLAYER)
+
+
+func _setup_faction_systems() -> void:
+	delivery_ledger = DeliveryLedger.new()
+	market_share = MarketShareSystem.new()
+	market_share.setup(delivery_ledger)
+
+
+func _setup_baron_ai() -> void:
+	baron_ai = BaronAI.new()
+	baron_ai.setup(graph, faction_manager, city_runtime, city_data_by_id, cargo_catalog, cities_grid, world, _catalog, get_maintenance_discount_for_city)
+	add_child(baron_ai)
 
 
 func _setup_clock() -> void:
@@ -646,21 +745,57 @@ func _show_save_toast(message: String) -> void:
 
 
 func _on_trip_completed(stats: RouteProfitStats) -> void:
-	# Sprint 14: forward delivery to contract manager
-	if contract_manager == null or stats == null:
+	if stats == null:
 		return
-	# We need to know which route this came from to get cargo and destination
-	for r in active_runners:
+
+	# Find the runner that emitted this signal
+	var found_runner: RouteRunner = null
+	var faction_id: String = ""
+	for r in active_runners + ai_runners:
 		if r != null and r.get_stats() == stats and r._schedule != null:
-			var sched: RouteSchedule = r._schedule
-			contract_manager.record_delivery(sched.cargo_id, sched.destination_city_id, stats.last_trip_quantity)
-			return
+			found_runner = r
+			faction_id = FactionManager.FACTION_BRITISH if r in ai_runners else FactionManager.FACTION_PLAYER
+			break
+
+	if found_runner == null:
+		return
+
+	var sched: RouteSchedule = found_runner._schedule
+
+	# Record to delivery ledger
+	if delivery_ledger != null and clock != null:
+		var absolute_day := _to_absolute_day(clock.current_day, clock.current_month, clock.current_year)
+		delivery_ledger.record_delivery(
+			absolute_day,
+			faction_id,
+			sched.instance_id,
+			sched.assigned_train_instance_id,
+			sched.origin_city_id,
+			sched.destination_city_id,
+			sched.cargo_id,
+			stats.last_trip_quantity,
+			stats.last_trip_revenue,
+			stats.last_trip_operating_cost
+		)
+
+	# Sprint 14: forward delivery to contract manager (only for player routes)
+	if contract_manager != null and faction_id == FactionManager.FACTION_PLAYER:
+		contract_manager.record_delivery(sched.cargo_id, sched.destination_city_id, stats.last_trip_quantity)
 
 
 func _on_day_passed(day: int, month: int, year: int) -> void:
 	for r in active_runners:
 		if r != null:
 			r.on_day_passed()
+
+	# Sprint 15: Baron AI tick
+	if baron_ai != null:
+		baron_ai.tick(day, month, year)
+
+	# Set current day on all runners for ledger recording
+	for r in active_runners + ai_runners:
+		if r != null and r.has_method("set_current_day"):
+			r.set_current_day(day, month, year)
 
 	# Sprint 14: contract deadlines and generation
 	if contract_manager != null:
@@ -673,6 +808,10 @@ func get_maintenance_discount_for_city(city_id: String) -> float:
 	if upgrades == null:
 		return 0.0
 	return upgrades.get_maintenance_discount()
+
+
+func _to_absolute_day(day: int, month: int, year: int) -> int:
+	return ((year - 1857) * 360) + ((month - 1) * 30) + day
 
 
 static func _comma_sep(n: int) -> String:

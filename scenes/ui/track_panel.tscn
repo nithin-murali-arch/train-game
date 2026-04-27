@@ -1,0 +1,104 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Theme" path="res://assets/theme/governor_archive.tres" id="1_theme"]
+[ext_resource type="Script" path="res://src/ui/track_panel.gd" id="2_script"]
+
+[node name="TrackPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -180.0
+offset_right = 180.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Track Properties"
+horizontal_alignment = 1
+
+[node name="OwnerLabel" type="Label" parent="Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Owner: —"
+
+[node name="AccessModeLabel" type="Label" parent="Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Access: —"
+
+[node name="TollLabel" type="Label" parent="Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Toll: —"
+
+[node name="LengthLabel" type="Label" parent="Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Length: —"
+
+[node name="ConditionLabel" type="Label" parent="Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Condition: —"
+
+[node name="EditRow" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SetOpenButton" type="Button" parent="Panel/Margin/VBox/EditRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Set Open"
+
+[node name="SetPrivateButton" type="Button" parent="Panel/Margin/VBox/EditRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Set Private"
+
+[node name="TollInput" type="LineEdit" parent="Panel/Margin/VBox/EditRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Toll"
+
+[node name="ApplyTollButton" type="Button" parent="Panel/Margin/VBox/EditRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Apply Toll"
+
+[node name="CloseRow" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="CloseButton" type="Button" parent="Panel/Margin/VBox/CloseRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Close"

@@ -359,8 +359,14 @@
 - [x] **Price recovery** — natural recovery via `EconomyTickSystem` verified
 - [x] **Save/Load v3** — `CURRENT_VERSION = 3`, v1/v2 backward compat
 
+### Post-Completion Fix: Absolute Day Counting
+- **Problem:** `SimulationClock.current_day` resets to 1 after day 30, so `deadline_day = current_day + 30` produced `deadline_day = 50` and never expired.
+- **Fix:** Added `_to_absolute_day(day, month, year) = ((year - 1857) * 360) + ((month - 1) * 30) + day`. Contract deadlines, refresh intervals, and save/load v3 all use absolute days.
+- **Backward compat:** v1/v2 saves derive safe defaults from calendar fields.
+- Commit: `4034cdd`
+
 ### Test Results
-- Sprint 14 acceptance: **54 PASS, 0 FAIL** (15 test suites)
+- Sprint 14 acceptance: **58 PASS, 0 FAIL** (17 test suites)
 - Sprint 13 regression: **47 PASS, 0 FAIL**
 
 ### Known Limitations
@@ -370,19 +376,35 @@
 
 ---
 
-## Sprint 15 — Rival Pressure: British AI + Market Share + Track Ownership/Tolls 🔒 LOCKED
+## Sprint 15 — Rival Pressure: British AI + Market Share + Track Ownership/Tolls ✅ COMPLETE
 
 **Goal:** Add one visible competitor and make infrastructure strategic.
 
-- [ ] `FactionManager` for player/British treasuries
-- [ ] `BaronAI` state machine: Analyze → Expand → Operate → React
-- [ ] British AI route evaluation and track building
-- [ ] British AI train buying and routing
-- [ ] Delivery ledger
-- [ ] Market share by city and overall
-- [ ] Access modes: Open, Private, Contract
-- [ ] Toll per km and automatic treasury transfer
-- [ ] Track Panel for setting access/toll
+### Systems Delivered
+- [x] **FactionManager** — `src/factions/faction_manager.gd` — player + British treasuries
+- [x] **DeliveryLedger** — `src/economy/delivery_ledger.gd` — records all deliveries with metadata
+- [x] **MarketShareSystem** — `src/economy/market_share_system.gd` — city/overall share from ledger
+- [x] **BaronAI** — `src/ai/baron_ai.gd` — state machine: ANALYZE → BUILD_TRACK → BUY_TRAIN → CREATE_ROUTE → OPERATE → PAUSE_ON_LOSS
+- [x] **British AI integration** — builds Patna→Kolkata track, buys freight engine, creates coal route
+- [x] **TrackGraph access control** — `find_path()` respects `access_mode` + `faction_id`
+- [x] **Toll system** — `calculate_path_toll()` + RouteRunner deducts/adds tolls via FactionManager
+- [x] **Private track blocking** — foreign private edges excluded from pathfinding
+- [x] **RouteRunner faction support** — `_faction_id`, `_faction_manager`, `_delivery_ledger` params
+- [x] **Track Panel UI** — `src/ui/track_panel.gd` + `scenes/ui/track_panel.tscn`
+- [x] **HUD updates** — British treasury, market share, AI state, track button
+- [x] **Save/Load v4** — `CURRENT_VERSION = 4`, persists faction, ledger, AI state; v1/v2/v3 backward compat
+
+### Test Results
+- Sprint 15 acceptance: **52 PASS, 0 FAIL** (17 test suites)
+- Sprint 14 regression: **58 PASS, 0 FAIL**
+- Sprint 13 regression: **47 PASS, 0 FAIL**
+
+### Known Limitations
+- BaronAI uses hardcoded first route (Patna→Kolkata coal) for determinism
+- Only one AI route for Sprint 15
+- Track panel not fully wired to HUD click-to-select (opens via button)
+- "restricted" access mode stored but not enforced
+- Market share is quantity-based (not revenue-based)
 
 ---
 

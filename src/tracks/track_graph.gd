@@ -185,7 +185,7 @@ func get_all_edges() -> Array[TrackEdgeData]:
 # Pathfinding (A*)
 # ============================================================================
 
-func find_path(from_coord: Vector2i, to_coord: Vector2i) -> TrackPathResult:
+func find_path(from_coord: Vector2i, to_coord: Vector2i, faction_id: String = "") -> TrackPathResult:
 	var result := TrackPathResult.new()
 
 	# Self-path
@@ -241,6 +241,13 @@ func find_path(from_coord: Vector2i, to_coord: Vector2i) -> TrackPathResult:
 			if edge.is_blocked or edge.condition <= 0.0:
 				continue
 
+			# Skip edges the faction cannot use
+			if not faction_id.is_empty():
+				if edge.access_mode == "private" and edge.owner_faction_id != faction_id:
+					continue
+				if edge.access_mode == "restricted":
+					continue
+
 			var edge_cost := edge.length_km / maxf(edge.condition, 0.1)
 			var tentative_g: float = (g_score.get(current_k, INF) as float) + edge_cost
 
@@ -284,6 +291,28 @@ func _reconstruct_path(result: TrackPathResult, came_from: Dictionary, current_k
 	result.coords = coords
 	result.total_length_km = total_length
 	result.total_cost = total_cost
+
+
+# ============================================================================
+# Path helpers
+# ============================================================================
+
+func get_edges_between(coords: Array[Vector2i]) -> Array[TrackEdgeData]:
+	var result: Array[TrackEdgeData] = []
+	for i in range(coords.size() - 1):
+		var edge := get_edge(coords[i], coords[i + 1])
+		if edge != null:
+			result.append(edge)
+	return result
+
+
+func calculate_path_toll(path_coords: Array[Vector2i], faction_id: String) -> int:
+	var total_toll := 0.0
+	var edges := get_edges_between(path_coords)
+	for edge in edges:
+		if edge.owner_faction_id != faction_id and edge.access_mode == "open":
+			total_toll += edge.length_km * edge.toll_per_km
+	return int(total_toll)
 
 
 # ============================================================================

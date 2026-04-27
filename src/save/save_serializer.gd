@@ -8,7 +8,7 @@ extends RefCounted
 
 static func serialize(route_toy: RouteToyPlayable) -> SaveGameData:
 	var data := SaveGameData.new()
-	data.save_version = SaveGameData.CURRENT_VERSION  # v3
+	data.save_version = SaveGameData.CURRENT_VERSION  # v4
 
 	# Clock
 	if route_toy.clock != null:
@@ -120,6 +120,14 @@ static func serialize(route_toy: RouteToyPlayable) -> SaveGameData:
 			upgrades_dict[city_id] = upgrades.to_dict()
 	data.station_upgrades = upgrades_dict
 
+	# Sprint 15: faction systems & AI
+	if route_toy.faction_manager != null:
+		data.faction_state = route_toy.faction_manager.to_dict()
+	if route_toy.delivery_ledger != null:
+		data.delivery_ledger = route_toy.delivery_ledger.to_dict()
+	if route_toy.baron_ai != null:
+		data.baron_ai_state = route_toy.baron_ai.to_dict()
+
 	return data
 
 
@@ -186,6 +194,25 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 	# Rebuild renderer from restored graph
 	if route_toy.renderer != null:
 		route_toy.renderer.setup(route_toy.graph)
+
+	# Sprint 15: restore faction systems & AI (must happen before runners/contract_manager)
+	if data.save_version >= 4:
+		if route_toy.faction_manager != null:
+			route_toy.faction_manager.from_dict(data.faction_state)
+		if route_toy.delivery_ledger != null:
+			route_toy.delivery_ledger.from_dict(data.delivery_ledger)
+		if route_toy.baron_ai != null:
+			route_toy.baron_ai.from_dict(data.baron_ai_state)
+	else:
+		# v1/v2/v3: fresh defaults
+		if route_toy.delivery_ledger != null:
+			route_toy.delivery_ledger.clear()
+		if route_toy.baron_ai != null:
+			route_toy.baron_ai.from_dict({"state": "ANALYZE", "trip_count": 0, "consecutive_unprofitable_trips": 0})
+
+	# Re-wire treasury to player's faction treasury
+	if route_toy.faction_manager != null:
+		route_toy.treasury = route_toy.faction_manager.get_treasury_for_faction(FactionManager.FACTION_PLAYER)
 
 	# Clear old trains/runners
 	for r in route_toy.active_runners:

@@ -19,6 +19,7 @@ var _last_placed_edge: Array[Vector2i] = []
 var _build_mode_active: bool = false
 var _city_coords: Array[Vector2i] = []
 var _on_toast: Callable
+var _owner_faction_id: String = "player_railway_company"
 
 
 func setup(graph: TrackGraph, camera: Camera2D, preview: TrackPlacementPreview, renderer: TrackRenderer) -> void:
@@ -44,6 +45,10 @@ func set_city_coords(coords: Array[Vector2i]) -> void:
 
 func set_on_toast(callback: Callable) -> void:
 	_on_toast = callback
+
+
+func set_owner_faction_id(faction_id: String) -> void:
+	_owner_faction_id = faction_id
 
 
 func _process(_delta: float) -> void:
@@ -111,7 +116,7 @@ func _place_edge() -> void:
 		_cancel()
 		return
 
-	var added := _graph.add_edge(_start_coord, end_coord)
+	var added := _graph.add_edge(_start_coord, end_coord, _owner_faction_id)
 	if added:
 		if _treasury != null:
 			_treasury.spend(cost)

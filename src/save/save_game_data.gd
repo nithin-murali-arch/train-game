@@ -2,7 +2,7 @@ class_name SaveGameData
 extends RefCounted
 
 
-const CURRENT_VERSION: int = 3
+const CURRENT_VERSION: int = 4
 
 var save_version: int = CURRENT_VERSION
 var saved_at: String = ""
@@ -34,6 +34,11 @@ var routes: Array[Dictionary] = []
 var reputation: int = 0
 var contracts: Dictionary = {}
 var station_upgrades: Dictionary = {}
+
+# Sprint 15 fields
+var faction_state: Dictionary = {}
+var delivery_ledger: Array = []
+var baron_ai_state: Dictionary = {}
 
 # Legacy v1 fields (kept for backward-compat reading only)
 var train_id: String = ""
@@ -68,6 +73,9 @@ func to_json_string() -> String:
 		"reputation": reputation,
 		"contracts": contracts,
 		"station_upgrades": station_upgrades,
+		"faction_state": faction_state,
+		"delivery_ledger": delivery_ledger,
+		"baron_ai_state": baron_ai_state,
 	}
 	return JSON.stringify(dict, "\t")
 
@@ -108,6 +116,11 @@ static func from_json_string(json_str: String) -> SaveGameData:
 	data.reputation = dict.get("reputation", 0) as int
 	data.contracts = dict.get("contracts", {}) as Dictionary
 	data.station_upgrades = dict.get("station_upgrades", {}) as Dictionary
+
+	# v4 fields (optional for backward compat)
+	data.faction_state = dict.get("faction_state", {}) as Dictionary
+	data.delivery_ledger = _to_dict_array(dict.get("delivery_ledger", []))
+	data.baron_ai_state = dict.get("baron_ai_state", {}) as Dictionary
 
 	# v1 legacy fallback
 	var train_dict: Dictionary = dict.get("train", {}) as Dictionary

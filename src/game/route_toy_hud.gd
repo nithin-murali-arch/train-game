@@ -55,6 +55,11 @@ var _last_state_name: String = ""
 var _toast_label: Label
 var _toast_timer: float = 0.0
 
+var _british_treasury_label: Label
+var _market_share_label: Label
+var _ai_state_label: Label
+var _track_btn: Button
+
 
 func bind_route_toy(route_toy: Node) -> void:
 	_route_toy = route_toy
@@ -128,6 +133,30 @@ func _ready() -> void:
 		_station_upgrade_panel.upgrade_purchased.connect(_on_upgrade_purchased)
 		_station_upgrade_panel.cancelled.connect(func(): close_panels())
 
+	_british_treasury_label = Label.new()
+	_british_treasury_label.text = "British: ₹0"
+	var top_left_vbox := _treasury_label.get_parent()
+	top_left_vbox.add_child(_british_treasury_label)
+	top_left_vbox.move_child(_british_treasury_label, _treasury_label.get_index() + 1)
+
+	_market_share_label = Label.new()
+	_market_share_label.text = "Share: 0%"
+	top_left_vbox.add_child(_market_share_label)
+	top_left_vbox.move_child(_market_share_label, _reputation_label.get_index() + 1)
+
+	_ai_state_label = Label.new()
+	_ai_state_label.text = "AI: —"
+	var top_right_vbox := _route_status_label.get_parent()
+	top_right_vbox.add_child(_ai_state_label)
+	top_right_vbox.move_child(_ai_state_label, _route_status_label.get_index() + 1)
+
+	_track_btn = Button.new()
+	_track_btn.text = "Track"
+	var controls_vbox := _stations_btn.get_parent()
+	controls_vbox.add_child(_track_btn)
+	controls_vbox.move_child(_track_btn, _stations_btn.get_index() + 1)
+	_track_btn.pressed.connect(_on_track_pressed)
+
 
 func close_panels() -> void:
 	if _train_purchase_panel != null:
@@ -148,6 +177,7 @@ func _process(delta: float) -> void:
 	_update_trip_stats()
 	_update_speed_buttons()
 	_update_toast(delta)
+	_update_extra_labels()
 
 
 # ------------------------------------------------------------------------------
@@ -174,6 +204,7 @@ func _on_reset_pressed() -> void:
 	_last_trip_count = -1
 	_last_state_name = ""
 	_update_all()
+	_update_extra_labels()
 
 
 func _on_buy_train_pressed() -> void:
@@ -242,6 +273,10 @@ func _on_next_route_pressed() -> void:
 		return
 	_selected_route_index = (_selected_route_index + 1) % count
 	_update_all()
+
+
+func _on_track_pressed() -> void:
+	show_toast("Track panel not yet integrated")
 
 
 func _selected_runner() -> RouteRunner:
@@ -363,6 +398,12 @@ func _update_speed_buttons() -> void:
 	_speed_1x_btn.disabled = not paused
 	_speed_2x_btn.disabled = not paused
 	_speed_4x_btn.disabled = not paused
+
+
+func _update_extra_labels() -> void:
+	_british_treasury_label.text = "British: ₹%s" % _comma_sep(_route_toy.get_british_treasury_balance())
+	_market_share_label.text = "Share: %.0f%%" % (_route_toy.get_player_market_share() * 100.0)
+	_ai_state_label.text = "AI: %s" % _route_toy.get_ai_state_name()
 
 
 func show_toast(message: String, duration: float = 2.0) -> void:
