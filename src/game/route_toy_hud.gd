@@ -5,6 +5,7 @@ extends CanvasLayer
 @onready var _company_label: Label = %CompanyLabel
 @onready var _treasury_label: Label = %TreasuryLabel
 @onready var _date_label: Label = %DateLabel
+@onready var _reputation_label: Label = %ReputationLabel
 
 @onready var _pause_btn: Button = %PauseButton
 @onready var _speed_1x_btn: Button = %Speed1xButton
@@ -35,12 +36,16 @@ extends CanvasLayer
 @onready var _build_track_btn: Button = %BuildTrackButton
 @onready var _buy_train_btn: Button = %BuyTrainButton
 @onready var _create_route_btn: Button = %CreateRouteButton
+@onready var _contracts_btn: Button = %ContractsButton
+@onready var _stations_btn: Button = %StationsButton
 @onready var _start_btn: Button = %StartButton
 @onready var _pause_resume_btn: Button = %PauseResumeButton
 @onready var _reset_btn: Button = %ResetButton
 
 @onready var _train_purchase_panel: Node = %TrainPurchasePanel
 @onready var _route_creation_panel: Node = %RouteCreationPanel
+@onready var _contracts_panel: Node = %ContractsPanel
+@onready var _station_upgrade_panel: Node = %StationUpgradePanel
 
 var _route_toy: Node
 var _selected_route_index: int = 0
@@ -99,6 +104,8 @@ func _ready() -> void:
 	_build_track_btn.pressed.connect(func(): _route_toy.toggle_build_mode())
 	_buy_train_btn.pressed.connect(_on_buy_train_pressed)
 	_create_route_btn.pressed.connect(_on_create_route_pressed)
+	_contracts_btn.pressed.connect(_on_contracts_pressed)
+	_stations_btn.pressed.connect(_on_stations_pressed)
 	_next_route_btn.pressed.connect(_on_next_route_pressed)
 
 	_start_btn.pressed.connect(func(): _route_toy.start_route())
@@ -113,12 +120,24 @@ func _ready() -> void:
 		_route_creation_panel.route_created.connect(_on_route_created)
 		_route_creation_panel.cancelled.connect(func(): close_panels())
 
+	if _contracts_panel != null:
+		_contracts_panel.contract_accepted.connect(_on_contract_accepted)
+		_contracts_panel.cancelled.connect(func(): close_panels())
+
+	if _station_upgrade_panel != null:
+		_station_upgrade_panel.upgrade_purchased.connect(_on_upgrade_purchased)
+		_station_upgrade_panel.cancelled.connect(func(): close_panels())
+
 
 func close_panels() -> void:
 	if _train_purchase_panel != null:
 		_train_purchase_panel.close()
 	if _route_creation_panel != null:
 		_route_creation_panel.close()
+	if _contracts_panel != null:
+		_contracts_panel.close()
+	if _station_upgrade_panel != null:
+		_station_upgrade_panel.close()
 
 
 func _process(delta: float) -> void:
@@ -195,6 +214,28 @@ func _on_route_created(params: Dictionary) -> void:
 		_update_all()
 
 
+func _on_contracts_pressed() -> void:
+	if _route_toy == null or _contracts_panel == null:
+		return
+	close_panels()
+	_contracts_panel.open(_route_toy)
+
+
+func _on_stations_pressed() -> void:
+	if _route_toy == null or _station_upgrade_panel == null:
+		return
+	close_panels()
+	_station_upgrade_panel.open(_route_toy)
+
+
+func _on_contract_accepted(_contract_id: String) -> void:
+	show_toast("Contract accepted")
+
+
+func _on_upgrade_purchased(_city_id: String, _upgrade_type: String) -> void:
+	show_toast("Upgrade purchased")
+
+
 func _on_next_route_pressed() -> void:
 	var count: int = _route_toy.get_runner_count()
 	if count <= 1:
@@ -231,6 +272,8 @@ func _update_all() -> void:
 func _update_treasury_date() -> void:
 	_treasury_label.text = "Treasury: ₹%s" % _comma_sep(_route_toy.get_treasury_balance())
 	_date_label.text = "Date: %s" % _route_toy.get_date_string()
+	var rep: int = _route_toy.reputation if _route_toy != null else 0
+	_reputation_label.text = "Reputation: %d" % rep
 
 
 func _update_route_info() -> void:

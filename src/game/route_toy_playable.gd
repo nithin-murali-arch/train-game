@@ -30,6 +30,11 @@ var route_by_instance_id: Dictionary = {}   # instance_id -> RouteRunner
 var _next_train_instance_id: int = 1
 var _next_route_instance_id: int = 1
 
+# Sprint 14: Economy Depth
+var reputation: int = 0
+var contract_manager: ContractManager
+var station_upgrades: Dictionary = {}  # city_id -> StationUpgradeState
+
 var train_data: TrainData
 var pathfinder: TrainPathfinder
 
@@ -62,6 +67,8 @@ func _ready() -> void:
 	_setup_clock()
 	_setup_economy()
 	_setup_track_placer()
+	_setup_contracts()
+	_setup_station_upgrades()
 
 	_auto_start()
 
@@ -151,6 +158,14 @@ func reset_simulation() -> void:
 	# Reset economy/cities/treasury
 	_setup_cities_runtime()
 	_setup_treasury()
+
+	# Reset Sprint 14 state
+	reputation = 0
+	contract_manager = ContractManager.new()
+	contract_manager.setup(city_data_by_id, cargo_catalog, treasury)
+	station_upgrades.clear()
+	for city_id in city_data_by_id.keys():
+		station_upgrades[city_id] = StationUpgradeState.new()
 
 	# Turn off build mode
 	if placer != null:
@@ -284,12 +299,16 @@ func create_route(params: Dictionary) -> bool:
 		city_data_by_id[origin_id],
 		city_data_by_id[destination_id],
 		treasury,
-		cargo_catalog
+		cargo_catalog,
+		get_maintenance_discount_for_city
 	)
 	add_child(new_runner)
 	active_runners.append(new_runner)
 	route_by_instance_id[new_schedule.instance_id] = new_runner
 	_next_route_instance_id += 1
+
+	# Connect contract delivery tracking
+	new_runner.trip_completed.connect(_on_trip_completed)
 
 	# Auto-start the route
 	new_runner.start_route()
@@ -552,6 +571,20 @@ func _setup_track_placer() -> void:
 	add_child(placer)
 
 
+func _setup_contracts() -> void:
+	contract_manager = ContractManager.new()
+	contract_manager.setup(city_data_by_id, cargo_catalog, treasury, func(new_rep: int): reputation = new_rep)
+	# Generate initial contracts
+	if clock != null:
+		contract_manager.generate_contracts_if_needed(clock.current_day, clock.current_month, clock.current_year)
+
+
+func _setup_station_upgrades() -> void:
+	station_upgrades.clear()
+	for city_id in city_data_by_id.keys():
+		station_upgrades[city_id] = StationUpgradeState.new()
+
+
 func _auto_start() -> void:
 	clock.start()
 	clock.pause()  # Start paused — player drives the action
@@ -586,6 +619,11 @@ func load_game() -> bool:
 		var hud = get_node_or_null("HUD")
 		if hud != null and hud.has_method("bind_route_toy"):
 			hud.bind_route_toy(self)
+		# Reconnect contract tracking signals
+		for r in active_runners:
+			if r != null and not r.trip_completed.is_connected(_on_trip_completed):
+				r.trip_completed.connect(_on_trip_completed)
+
 		# Restart all idle routes
 		for r in active_runners:
 			if r != null and r.get_state_name() == "IDLE":
@@ -607,10 +645,34 @@ func _show_save_toast(message: String) -> void:
 		print("Toast: %s" % message)
 
 
-func _on_day_passed(_day: int, _month: int, _year: int) -> void:
+func _on_trip_completed(stats: RouteProfitStats) -> void:
+	# Sprint 14: forward delivery to contract manager
+	if contract_manager == null or stats == null:
+		return
+	# We need to know which route this came from to get cargo and destination
+	for r in active_runners:
+		if r != null and r.get_stats() == stats and r._schedule != null:
+			var sched: RouteSchedule = r._schedule
+			contract_manager.record_delivery(sched.cargo_id, sched.destination_city_id, stats.last_trip_quantity)
+			return
+
+
+func _on_day_passed(day: int, month: int, year: int) -> void:
 	for r in active_runners:
 		if r != null:
 			r.on_day_passed()
+
+	# Sprint 14: contract deadlines and generation
+	if contract_manager != null:
+		contract_manager.check_deadlines(day, month, year)
+		contract_manager.generate_contracts_if_needed(day, month, year)
+
+
+func get_maintenance_discount_for_city(city_id: String) -> float:
+	var upgrades: StationUpgradeState = station_upgrades.get(city_id, null) as StationUpgradeState
+	if upgrades == null:
+		return 0.0
+	return upgrades.get_maintenance_discount()
 
 
 static func _comma_sep(n: int) -> String:

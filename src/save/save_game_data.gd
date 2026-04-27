@@ -2,7 +2,7 @@ class_name SaveGameData
 extends RefCounted
 
 
-const CURRENT_VERSION: int = 2
+const CURRENT_VERSION: int = 3
 
 var save_version: int = CURRENT_VERSION
 var saved_at: String = ""
@@ -29,6 +29,11 @@ var trains: Array[Dictionary] = []
 
 # Routes (v2 array — supports multiple routes)
 var routes: Array[Dictionary] = []
+
+# Sprint 14 fields
+var reputation: int = 0
+var contracts: Dictionary = {}
+var station_upgrades: Dictionary = {}
 
 # Legacy v1 fields (kept for backward-compat reading only)
 var train_id: String = ""
@@ -60,6 +65,9 @@ func to_json_string() -> String:
 		},
 		"trains": trains,
 		"routes": routes,
+		"reputation": reputation,
+		"contracts": contracts,
+		"station_upgrades": station_upgrades,
 	}
 	return JSON.stringify(dict, "\t")
 
@@ -95,6 +103,11 @@ static func from_json_string(json_str: String) -> SaveGameData:
 	# v2 arrays
 	data.trains = _to_dict_array(dict.get("trains", []))
 	data.routes = _to_dict_array(dict.get("routes", []))
+
+	# v3 fields (optional for backward compat)
+	data.reputation = dict.get("reputation", 0) as int
+	data.contracts = dict.get("contracts", {}) as Dictionary
+	data.station_upgrades = dict.get("station_upgrades", {}) as Dictionary
 
 	# v1 legacy fallback
 	var train_dict: Dictionary = dict.get("train", {}) as Dictionary

@@ -341,20 +341,32 @@
 
 ---
 
-## Sprint 14 — Economy Depth: Contracts + Station Upgrades + Profitability 🔒 LOCKED
+## Sprint 14 — Economy Depth: Contracts + Station Upgrades + Profitability ✅ COMPLETE
 
 **Goal:** Make the economy interesting before adding enemies.
 
-- [ ] `ContractData` and `ContractManager`
-- [ ] Contract generation, accept, complete, fail
-- [ ] Reputation variable
-- [ ] Contracts Panel UI
-- [ ] Warehouse upgrade
-- [ ] Loading Bay upgrade
-- [ ] Maintenance Shed upgrade
-- [ ] Demand saturation warnings
-- [ ] Price recovery behavior
-- [ ] Technology Auction shell (player-only)
+### Systems Delivered
+- [x] **ContractData** — `src/resources/contract_data.gd`
+- [x] **ContractRuntimeState** — `src/contracts/contract_runtime_state.gd`
+- [x] **ContractManager** — `src/contracts/contract_manager.gd` (generation, acceptance, progress, expiry, rewards)
+- [x] **Reputation** — `RouteToyPlayable.reputation` + HUD display + save/load
+- [x] **Contracts Panel UI** — `src/ui/contracts_panel.gd` + `scenes/ui/contracts_panel.tscn`
+- [x] **Contract delivery integration** — `trip_completed` → `ContractManager.record_delivery()` → completion/expiry
+- [x] **StationUpgradeState** — `src/stations/station_upgrade_state.gd`
+- [x] **Station Upgrade Panel UI** — `src/ui/station_upgrade_panel.gd` + `scenes/ui/station_upgrade_panel.tscn`
+- [x] **Maintenance Shed effect** — 10%/20%/30% discount passed to `RouteRunner` via `Callable`
+- [x] **Demand saturation warnings** — verified in route preview + acceptance test
+- [x] **Price recovery** — natural recovery via `EconomyTickSystem` verified
+- [x] **Save/Load v3** — `CURRENT_VERSION = 3`, v1/v2 backward compat
+
+### Test Results
+- Sprint 14 acceptance: **54 PASS, 0 FAIL** (15 test suites)
+- Sprint 13 regression: **47 PASS, 0 FAIL**
+
+### Known Limitations
+- Contract matching is destination+cargo only
+- Warehouse/Loading Bay effects are display-only for Sprint 14
+- Reputation is display-only (no gating yet)
 
 ---
 

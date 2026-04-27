@@ -8,7 +8,7 @@ extends RefCounted
 
 static func serialize(route_toy: RouteToyPlayable) -> SaveGameData:
 	var data := SaveGameData.new()
-	data.save_version = SaveGameData.CURRENT_VERSION  # v2
+	data.save_version = SaveGameData.CURRENT_VERSION  # v3
 
 	# Clock
 	if route_toy.clock != null:
@@ -104,6 +104,21 @@ static func serialize(route_toy: RouteToyPlayable) -> SaveGameData:
 
 		route_dict["runner_state"] = r.get_state_name()
 		data.routes.append(route_dict)
+
+	# Sprint 14: reputation
+	data.reputation = route_toy.reputation
+
+	# Sprint 14: contracts
+	if route_toy.contract_manager != null:
+		data.contracts = route_toy.contract_manager.to_dict()
+
+	# Sprint 14: station upgrades
+	var upgrades_dict := {}
+	for city_id in route_toy.station_upgrades.keys():
+		var upgrades: StationUpgradeState = route_toy.station_upgrades[city_id] as StationUpgradeState
+		if upgrades != null:
+			upgrades_dict[city_id] = upgrades.to_dict()
+	data.station_upgrades = upgrades_dict
 
 	return data
 
@@ -331,7 +346,8 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 			route_toy.city_data_by_id[origin_id],
 			route_toy.city_data_by_id[dest_id],
 			route_toy.treasury,
-			route_toy.cargo_catalog
+			route_toy.cargo_catalog,
+			route_toy.get_maintenance_discount_for_city
 		)
 		route_toy.add_child(new_runner)
 		route_toy.active_runners.append(new_runner)
@@ -362,6 +378,29 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 	# Update counter so new routes don't collide with loaded ones
 	if max_route_id > 0:
 		route_toy._next_route_instance_id = max_route_id + 1
+
+	# Sprint 14: restore reputation
+	route_toy.reputation = data.reputation
+
+	# Sprint 14: restore contracts
+	if data.save_version >= 3 and not data.contracts.is_empty():
+		route_toy.contract_manager = ContractManager.from_dict(data.contracts)
+		route_toy.contract_manager.setup(route_toy.city_data_by_id, route_toy.cargo_catalog, route_toy.treasury, func(new_rep: int): route_toy.reputation = new_rep)
+	else:
+		# v1/v2 compat: fresh contract manager with generated contracts
+		route_toy.contract_manager = ContractManager.new()
+		route_toy.contract_manager.setup(route_toy.city_data_by_id, route_toy.cargo_catalog, route_toy.treasury, func(new_rep: int): route_toy.reputation = new_rep)
+		if route_toy.clock != null:
+			route_toy.contract_manager.generate_contracts_if_needed(route_toy.clock.current_day, route_toy.clock.current_month, route_toy.clock.current_year)
+
+	# Sprint 14: restore station upgrades
+	route_toy.station_upgrades.clear()
+	for city_id in route_toy.city_data_by_id.keys():
+		var upgrades := StationUpgradeState.new()
+		var city_upgrades: Dictionary = data.station_upgrades.get(city_id, {}) as Dictionary
+		if not city_upgrades.is_empty():
+			upgrades = StationUpgradeState.from_dict(city_upgrades)
+		route_toy.station_upgrades[city_id] = upgrades
 
 	# Resume clock if it was running
 	if route_toy.clock != null and not data.clock_is_paused:

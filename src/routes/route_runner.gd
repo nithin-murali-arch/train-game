@@ -29,6 +29,7 @@ var _destination_data: CityData
 var _treasury: TreasuryState
 var _cargo_catalog: Dictionary
 var _stats: RouteProfitStats
+var _get_maintenance_discount_cb: Callable = Callable()
 
 var _origin_grid: Vector2i
 var _destination_grid: Vector2i
@@ -48,7 +49,8 @@ func setup(
 	origin_data: CityData,
 	destination_data: CityData,
 	treasury: TreasuryState,
-	cargo_catalog: Dictionary
+	cargo_catalog: Dictionary,
+	get_maintenance_discount_cb: Callable = Callable()
 ) -> void:
 	_schedule = schedule
 	_train = train
@@ -60,6 +62,7 @@ func setup(
 	_destination_data = destination_data
 	_treasury = treasury
 	_cargo_catalog = cargo_catalog
+	_get_maintenance_discount_cb = get_maintenance_discount_cb
 
 	_origin_grid = origin_runtime.grid_coord
 	_destination_grid = destination_runtime.grid_coord
@@ -220,6 +223,9 @@ func _process_unloading() -> void:
 
 	# 4. Deduct maintenance/operating cost
 	var operating_cost := _train_data.maintenance_per_day
+	if _get_maintenance_discount_cb.is_valid():
+		var discount: float = _get_maintenance_discount_cb.call(_origin_data.city_id)
+		operating_cost = int(roundf(operating_cost * (1.0 - discount)))
 	if operating_cost > 0:
 		if _treasury.can_afford(operating_cost):
 			_treasury.spend(operating_cost)

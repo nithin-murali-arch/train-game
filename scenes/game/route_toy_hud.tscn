@@ -4,6 +4,8 @@
 [ext_resource type="Script" path="res://src/game/route_toy_hud.gd" id="2_script"]
 [ext_resource type="PackedScene" path="res://scenes/ui/train_purchase_panel.tscn" id="3_train_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/route_creation_panel.tscn" id="4_route_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/contracts_panel.tscn" id="5_contracts_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/station_upgrade_panel.tscn" id="6_station_panel"]
 
 [node name="RouteToyHUD" type="CanvasLayer"]
 script = ExtResource("2_script")
@@ -42,6 +44,11 @@ text = "Treasury: ₹20,000"
 unique_name_in_owner = true
 layout_mode = 2
 text = "Date: 1/1/1857"
+
+[node name="ReputationLabel" type="Label" parent="TopBar/TopLeftPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Reputation: 0"
 
 [node name="TopCenterPanel" type="PanelContainer" parent="TopBar"]
 layout_mode = 2
@@ -274,6 +281,16 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Create Route"
 
+[node name="ContractsButton" type="Button" parent="ControlsWidget/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Contracts"
+
+[node name="StationsButton" type="Button" parent="ControlsWidget/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Stations"
+
 [node name="NextRouteButton" type="Button" parent="ControlsWidget/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -302,4 +319,10 @@ text = "Reset"
 unique_name_in_owner = true
 
 [node name="RouteCreationPanel" parent="." instance=ExtResource("4_route_panel")]
+unique_name_in_owner = true
+
+[node name="ContractsPanel" parent="." instance=ExtResource("5_contracts_panel")]
+unique_name_in_owner = true
+
+[node name="StationUpgradePanel" parent="." instance=ExtResource("6_station_panel")]
 unique_name_in_owner = true
