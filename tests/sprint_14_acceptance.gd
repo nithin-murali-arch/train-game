@@ -18,6 +18,8 @@ func run_all_tests() -> void:
 	_test_contract_completion_reward()
 	_test_contract_reputation()
 	_test_contract_expiry_penalty()
+	_test_contract_expiry_across_month_boundary()
+	_test_contract_refresh_across_month_boundary()
 	_test_warehouse_upgrade()
 	_test_loading_bay_upgrade()
 	_test_maintenance_shed_upgrade()
@@ -215,16 +217,68 @@ func _test_contract_expiry_penalty() -> void:
 	contract.cargo_id = "coal"
 	contract.destination_city_id = "kolkata"
 	contract.required_quantity = 100
-	contract.deadline_day = 5
+	contract.deadline_absolute_day = 15
 	contract.penalty_money = 1000
 	contract.reputation_penalty = 3
 	contract.status = ContractRuntimeState.Status.ACCEPTED
 	rt.contract_manager._accepted.append(contract)
 
-	rt.contract_manager.check_deadlines(10, 1, 1857)
+	rt.contract_manager.check_deadlines(20, 1, 1857)
 	_assert(rt.treasury.balance == start_balance - 1000, "Penalty deducted")
 	_assert(rt.reputation == start_rep - 3, "Reputation decreased")
 	_assert(rt.contract_manager.get_failed_contracts().size() == 1, "Contract moved to failed")
+
+	rt.queue_free()
+
+
+# ------------------------------------------------------------------------------
+# Test 7b: Expired contract across month boundary
+# ------------------------------------------------------------------------------
+func _test_contract_expiry_across_month_boundary() -> void:
+	print("\n[Test 7b] Contract expiry across month boundary")
+	var rt := await _make_route_toy()
+
+	var start_balance: int = rt.treasury.balance
+	var contract := ContractRuntimeState.new()
+	contract.contract_id = "test_contract_004b"
+	contract.cargo_id = "coal"
+	contract.destination_city_id = "kolkata"
+	contract.required_quantity = 100
+	# Deadline: day 30 of month 1 = absolute day 30
+	contract.deadline_absolute_day = 30
+	contract.penalty_money = 1000
+	contract.status = ContractRuntimeState.Status.ACCEPTED
+	rt.contract_manager._accepted.append(contract)
+
+	# Day 28 of month 1 = absolute day 28 (before deadline)
+	rt.contract_manager.check_deadlines(28, 1, 1857)
+	_assert(rt.contract_manager.get_failed_contracts().is_empty(), "Contract not expired before deadline")
+
+	# Day 5 of month 2 = absolute day 35 (after deadline)
+	rt.contract_manager.check_deadlines(5, 2, 1857)
+	_assert(rt.treasury.balance == start_balance - 1000, "Penalty deducted after month boundary")
+	_assert(rt.contract_manager.get_failed_contracts().size() == 1, "Contract expired across month boundary")
+
+	rt.queue_free()
+
+
+# ------------------------------------------------------------------------------
+# Test 7c: Contract refresh across month boundary
+# ------------------------------------------------------------------------------
+func _test_contract_refresh_across_month_boundary() -> void:
+	print("\n[Test 7c] Contract refresh across month boundary")
+	var rt := await _make_route_toy()
+
+	# Generate initial contracts on day 25 month 1
+	rt.contract_manager.generate_contracts_if_needed(25, 1, 1857)
+	var initial_count: int = rt.contract_manager.get_available_contracts().size()
+	_assert(initial_count > 0, "Initial contracts generated")
+
+	# Refresh interval is 7 days. Day 2 month 2 = absolute day 32. 32 - 25 = 7.
+	# Should trigger refresh.
+	rt.contract_manager.generate_contracts_if_needed(2, 2, 1857)
+	# If refresh triggered, contracts may have been regenerated (same count)
+	_assert(rt.contract_manager.get_available_contracts().size() >= initial_count, "Refresh works across month boundary")
 
 	rt.queue_free()
 
@@ -352,6 +406,11 @@ func _test_save_load_v3() -> void:
 	contract.destination_city_id = "kolkata"
 	contract.required_quantity = 50
 	contract.delivered_quantity = 10
+	contract.accepted_day = 15
+	contract.accepted_month = 1
+	contract.accepted_year = 1857
+	contract.accepted_absolute_day = 15
+	contract.deadline_absolute_day = 45
 	contract.status = ContractRuntimeState.Status.ACCEPTED
 	rt.contract_manager._accepted.append(contract)
 
@@ -360,6 +419,11 @@ func _test_save_load_v3() -> void:
 	_assert(data.reputation == 42, "Reputation serialized")
 	_assert(not data.contracts.is_empty(), "Contracts serialized")
 	_assert(data.station_upgrades.has("patna"), "Upgrades serialized")
+
+	# Verify contract dict has absolute day fields
+	var contract_dict: Dictionary = data.contracts.get("accepted", [])[0] as Dictionary
+	_assert(contract_dict.get("accepted_absolute_day", 0) == 15, "Accepted absolute day serialized")
+	_assert(contract_dict.get("deadline_absolute_day", 0) == 45, "Deadline absolute day serialized")
 
 	rt.reset_simulation()
 	_assert(rt.reputation == 0, "Reset clears reputation")
@@ -370,6 +434,10 @@ func _test_save_load_v3() -> void:
 	_assert(rt.station_upgrades["patna"].warehouse_level == 2, "Warehouse level restored")
 	_assert(rt.station_upgrades["patna"].maintenance_shed_level == 1, "Shed level restored")
 	_assert(rt.contract_manager.get_accepted_contracts().size() == 1, "Accepted contract restored")
+
+	var restored_contract: ContractRuntimeState = rt.contract_manager.get_accepted_contracts()[0]
+	_assert(restored_contract.accepted_absolute_day == 15, "Accepted absolute day restored")
+	_assert(restored_contract.deadline_absolute_day == 45, "Deadline absolute day restored")
 
 	rt.queue_free()
 

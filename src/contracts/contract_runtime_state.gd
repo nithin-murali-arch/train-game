@@ -21,10 +21,12 @@ var delivered_quantity: int = 0
 var accepted_day: int = 0
 var accepted_month: int = 0
 var accepted_year: int = 0
+var accepted_absolute_day: int = 0
 
 var deadline_day: int = 0
 var deadline_month: int = 0
 var deadline_year: int = 0
+var deadline_absolute_day: int = 0
 
 var reward_money: int = 0
 var penalty_money: int = 0
@@ -57,9 +59,11 @@ func to_dict() -> Dictionary:
 		"accepted_day": accepted_day,
 		"accepted_month": accepted_month,
 		"accepted_year": accepted_year,
+		"accepted_absolute_day": accepted_absolute_day,
 		"deadline_day": deadline_day,
 		"deadline_month": deadline_month,
 		"deadline_year": deadline_year,
+		"deadline_absolute_day": deadline_absolute_day,
 		"reward_money": reward_money,
 		"penalty_money": penalty_money,
 		"reputation_reward": reputation_reward,
@@ -81,9 +85,17 @@ static func from_dict(dict: Dictionary) -> ContractRuntimeState:
 	s.accepted_day = dict.get("accepted_day", 0) as int
 	s.accepted_month = dict.get("accepted_month", 0) as int
 	s.accepted_year = dict.get("accepted_year", 0) as int
+	s.accepted_absolute_day = dict.get("accepted_absolute_day", 0) as int
 	s.deadline_day = dict.get("deadline_day", 0) as int
 	s.deadline_month = dict.get("deadline_month", 0) as int
 	s.deadline_year = dict.get("deadline_year", 0) as int
+	s.deadline_absolute_day = dict.get("deadline_absolute_day", 0) as int
+
+	# Backward compat: derive absolute day from calendar fields if missing
+	if s.accepted_absolute_day == 0 and s.accepted_day > 0 and s.accepted_month > 0 and s.accepted_year > 0:
+		s.accepted_absolute_day = _to_absolute_day(s.accepted_day, s.accepted_month, s.accepted_year)
+	if s.deadline_absolute_day == 0 and s.deadline_day > 0 and s.deadline_month > 0 and s.deadline_year > 0:
+		s.deadline_absolute_day = _to_absolute_day(s.deadline_day, s.deadline_month, s.deadline_year)
 	s.reward_money = dict.get("reward_money", 0) as int
 	s.penalty_money = dict.get("penalty_money", 0) as int
 	s.reputation_reward = dict.get("reputation_reward", 0) as int
@@ -92,6 +104,10 @@ static func from_dict(dict: Dictionary) -> ContractRuntimeState:
 	var status_str: String = dict.get("status", "Available") as String
 	s.status = _status_from_name(status_str)
 	return s
+
+
+static func _to_absolute_day(day: int, month: int, year: int) -> int:
+	return ((year - 1857) * 360) + ((month - 1) * 30) + day
 
 
 static func _status_from_name(name: String) -> int:

@@ -21,7 +21,7 @@ var _reputation: int = 0
 var _reputation_callback: Callable = Callable()
 
 var _contract_counter: int = 1
-var _last_refresh_day: int = 0
+var _last_refresh_absolute_day: int = 0
 var _refresh_interval_days: int = 7
 var _target_available_count: int = 4
 
@@ -65,13 +65,14 @@ func get_failed_contracts() -> Array[ContractRuntimeState]:
 	return _failed.duplicate()
 
 
-func generate_contracts_if_needed(current_day: int, _month: int, _year: int) -> void:
-	if _available.is_empty() or (current_day - _last_refresh_day) >= _refresh_interval_days:
-		_generate_contracts(current_day)
-		_last_refresh_day = current_day
+func generate_contracts_if_needed(current_day: int, current_month: int, current_year: int) -> void:
+	var current_abs: int = _to_absolute_day(current_day, current_month, current_year)
+	if _available.is_empty() or (current_abs - _last_refresh_absolute_day) >= _refresh_interval_days:
+		_generate_contracts(current_abs)
+		_last_refresh_absolute_day = current_abs
 
 
-func _generate_contracts(current_day: int) -> void:
+func _generate_contracts(current_abs: int) -> void:
 	var city_ids: Array[String] = []
 	for city_id in _city_data_by_id.keys():
 		city_ids.append(city_id)
@@ -113,9 +114,7 @@ func _generate_contracts(current_day: int) -> void:
 		contract.destination_city_id = dest_id
 		contract.cargo_id = cargo_id
 		contract.required_quantity = required_qty
-		contract.deadline_day = current_day + deadline_days
-		contract.deadline_month = 0  # simplified: use absolute day counting
-		contract.deadline_year = 0
+		contract.deadline_absolute_day = current_abs + deadline_days
 		contract.reward_money = base_reward
 		contract.penalty_money = penalty
 		contract.reputation_reward = 5
@@ -136,6 +135,7 @@ func accept_contract(contract_id: String, current_day: int, current_month: int, 
 	contract.accepted_day = current_day
 	contract.accepted_month = current_month
 	contract.accepted_year = current_year
+	contract.accepted_absolute_day = _to_absolute_day(current_day, current_month, current_year)
 	_accepted.append(contract)
 	contract_accepted.emit(contract)
 	return true
@@ -149,10 +149,11 @@ func record_delivery(cargo_id: String, destination_city_id: String, quantity: in
 				_complete_contract(contract)
 
 
-func check_deadlines(current_day: int, _month: int, _year: int) -> void:
+func check_deadlines(current_day: int, current_month: int, current_year: int) -> void:
+	var current_abs: int = _to_absolute_day(current_day, current_month, current_year)
 	var to_remove: Array[ContractRuntimeState] = []
 	for contract in _accepted:
-		if contract.deadline_day > 0 and current_day > contract.deadline_day:
+		if contract.deadline_absolute_day > 0 and current_abs > contract.deadline_absolute_day:
 			to_remove.append(contract)
 
 	for contract in to_remove:
@@ -197,7 +198,7 @@ func to_dict() -> Dictionary:
 	return {
 		"reputation": _reputation,
 		"contract_counter": _contract_counter,
-		"last_refresh_day": _last_refresh_day,
+		"last_refresh_absolute_day": _last_refresh_absolute_day,
 		"available": _contracts_to_dict_array(_available),
 		"accepted": _contracts_to_dict_array(_accepted),
 		"completed": _contracts_to_dict_array(_completed),
@@ -209,7 +210,10 @@ static func from_dict(dict: Dictionary) -> ContractManager:
 	var cm := ContractManager.new()
 	cm._reputation = dict.get("reputation", 0) as int
 	cm._contract_counter = dict.get("contract_counter", 1) as int
-	cm._last_refresh_day = dict.get("last_refresh_day", 0) as int
+	cm._last_refresh_absolute_day = dict.get("last_refresh_absolute_day", 0) as int
+	# Backward compat: if old save had last_refresh_day but not absolute, default to 0 (will refresh soon)
+	if cm._last_refresh_absolute_day == 0 and dict.has("last_refresh_day"):
+		cm._last_refresh_absolute_day = 0
 	cm._available = _dict_array_to_contracts(dict.get("available", []))
 	cm._accepted = _dict_array_to_contracts(dict.get("accepted", []))
 	cm._completed = _dict_array_to_contracts(dict.get("completed", []))
@@ -222,6 +226,10 @@ static func _contracts_to_dict_array(contracts: Array[ContractRuntimeState]) -> 
 	for contract in contracts:
 		result.append(contract.to_dict())
 	return result
+
+
+static func _to_absolute_day(day: int, month: int, year: int) -> int:
+	return ((year - 1857) * 360) + ((month - 1) * 30) + day
 
 
 static func _dict_array_to_contracts(arr: Variant) -> Array[ContractRuntimeState]:
