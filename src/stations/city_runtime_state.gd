@@ -7,6 +7,9 @@ var display_name: String = ""
 var grid_coord: Vector2i = Vector2i.ZERO
 var inventory: CargoInventory
 
+var is_striking: bool = false
+var port_boom_multipliers: Dictionary = {}  # cargo_id -> { "demand_multiplier": float, "production_multiplier": float }
+
 
 func setup_from_city_data(city_data: CityData, cargo_catalog: Dictionary = {}) -> void:
 	city_id = city_data.city_id
@@ -21,6 +24,9 @@ func setup_from_city_data(city_data: CityData, cargo_catalog: Dictionary = {}) -
 			continue
 		if profile.starting_stock > 0:
 			inventory.add_cargo(profile.cargo_id, profile.starting_stock, cargo_catalog)
+
+	is_striking = false
+	port_boom_multipliers.clear()
 
 
 func get_quantity(cargo_id: String) -> int:

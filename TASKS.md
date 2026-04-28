@@ -408,20 +408,31 @@
 
 ---
 
-## Sprint 16 — Disruption Layer: Events + Maintenance + Crisis Handling 🔒 LOCKED
+## Sprint 16 — Disruption Layer: Events + Maintenance + Crisis Handling ✅ COMPLETE
 
 **Goal:** Add planning tension without random punishment.
 
-- [ ] `EventManager` with warning/active/resolved states
-- [ ] Event notification UI and event log
-- [ ] Monsoon Flood event
-- [ ] Labor Strike event
-- [ ] Port Boom event
-- [ ] Track Inspection event
-- [ ] `JunctionData` for bridges/passes
-- [ ] Track condition decay
-- [ ] Repair cost and UI
-- [ ] Low-condition speed penalty
+### Systems Delivered
+- [x] **EventRuntimeState** — `src/events/event_runtime_state.gd`
+- [x] **EventManager** — `src/events/event_manager.gd` (warning/active/resolved lifecycle, deterministic RNG)
+- [x] **Monsoon Flood** — blocks track edge for 10 days, 5-day warning
+- [x] **Labor Strike** — 50% loading penalty at affected city, 3-day warning
+- [x] **Port Boom** — doubles production/demand at port city, positive event
+- [x] **Track Inspection** — 7-day warning, fines for condition < 0.5
+- [x] **Track condition decay** — `TrackGraph.tick_condition_decay()`
+- [x] **Track Repair** — `src/tracks/track_repair.gd` (cost = (1.0 - condition) * length * 200)
+- [x] **Event Log Panel UI** — `src/ui/event_log_panel.gd` + `scenes/ui/event_log_panel.tscn`
+- [x] **Save/Load v5** — `CURRENT_VERSION = 5`, persists events, track condition; v1-v4 backward compat
+
+### Test Results
+- Sprint 16 acceptance: **33 PASS, 0 FAIL** (12 test suites)
+- Sprint 15 regression: **52 PASS, 0 FAIL**
+- Sprint 14 regression: **58 PASS, 0 FAIL**
+- Sprint 13 regression: **47 PASS, 0 FAIL**
+
+### Known Limitations
+- Low-condition speed penalty deferred (condition + repair system is sufficient for MVP)
+- Event frequency not yet tuned (deterministic for tests)
 
 ---
 

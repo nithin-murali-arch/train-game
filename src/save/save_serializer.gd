@@ -128,6 +128,10 @@ static func serialize(route_toy: RouteToyPlayable) -> SaveGameData:
 	if route_toy.baron_ai != null:
 		data.baron_ai_state = route_toy.baron_ai.to_dict()
 
+	# Sprint 16: events
+	if route_toy.event_manager != null:
+		data.event_manager_state = route_toy.event_manager.to_dict()
+
 	return data
 
 
@@ -203,12 +207,17 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 			route_toy.delivery_ledger.from_dict(data.delivery_ledger)
 		if route_toy.baron_ai != null:
 			route_toy.baron_ai.from_dict(data.baron_ai_state)
+		# Sprint 16: restore events
+		if data.save_version >= 5 and route_toy.event_manager != null and not data.event_manager_state.is_empty():
+			route_toy.event_manager.restore_from_dict(data.event_manager_state)
 	else:
 		# v1/v2/v3: fresh defaults
 		if route_toy.delivery_ledger != null:
 			route_toy.delivery_ledger.clear()
 		if route_toy.baron_ai != null:
 			route_toy.baron_ai.from_dict({"state": "ANALYZE", "trip_count": 0, "consecutive_unprofitable_trips": 0})
+		if route_toy.event_manager != null:
+			route_toy.event_manager.from_dict({})
 
 	# Re-wire treasury to player's faction treasury
 	if route_toy.faction_manager != null:

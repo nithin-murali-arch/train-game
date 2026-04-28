@@ -27,7 +27,7 @@ func run_all_tests() -> void:
 	_test_open_foreign_track_charges_toll()
 	_test_private_foreign_track_blocks()
 	_test_save_load_v4()
-	_test_no_sprint_16_features()
+	_test_event_manager_exists()
 	print("=== Results: %d passed, %d failed ===" % [_pass_count, _fail_count])
 	get_tree().quit(_fail_count)
 
@@ -73,7 +73,7 @@ func _test_sprint_13_regression() -> void:
 
 	var data: SaveGameData = SaveSerializer.serialize(rt)
 	_assert(data != null, "Serialize works")
-	_assert(data.save_version == 4, "Save version is 4")
+	_assert(data.save_version == 5, "Save version is 5")
 
 	rt.reset_simulation()
 	_assert(rt.owned_trains.is_empty(), "Reset clears trains")
@@ -397,7 +397,7 @@ func _test_save_load_v4() -> void:
 	rt.delivery_ledger.record_delivery(1, FactionManager.FACTION_PLAYER, "r1", "t1", "patna", "kolkata", "coal", 50, 750, 50)
 
 	var data: SaveGameData = SaveSerializer.serialize(rt)
-	_assert(data.save_version == 4, "Serialized as v4")
+	_assert(data.save_version == 5, "Serialized as v5")
 	_assert(not data.faction_state.is_empty(), "Faction state serialized")
 	_assert(data.delivery_ledger.size() > 0, "Delivery ledger serialized")
 
@@ -416,18 +416,15 @@ func _test_save_load_v4() -> void:
 	rt.queue_free()
 
 # ------------------------------------------------------------------------------
-# Test 17: No Sprint 16 features
+# Test 17: Sprint 16 event manager exists and is set up
 # ------------------------------------------------------------------------------
-func _test_no_sprint_16_features() -> void:
-	print("\n[Test 17] No Sprint 16 features")
+func _test_event_manager_exists() -> void:
+	print("\n[Test 17] Sprint 16 event manager exists")
 	var rt := await _make_route_toy()
 
-	# EventManager should not exist
-	var has_event_manager: bool = false
-	for child in rt.get_children():
-		if child.get_script() != null and child.get_script().resource_path.find("event_manager") != -1:
-			has_event_manager = true
-	_assert(not has_event_manager, "No EventManager exists")
+	_assert(rt.event_manager != null, "EventManager exists")
+	_assert(rt.get_warning_events().size() == 0, "No warning events at start")
+	_assert(rt.get_active_events().size() == 0, "No active events at start")
 
 	# CampaignManager should not exist
 	var has_campaign_manager: bool = false

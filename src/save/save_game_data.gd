@@ -2,7 +2,7 @@ class_name SaveGameData
 extends RefCounted
 
 
-const CURRENT_VERSION: int = 4
+const CURRENT_VERSION: int = 5
 
 var save_version: int = CURRENT_VERSION
 var saved_at: String = ""
@@ -40,6 +40,9 @@ var faction_state: Dictionary = {}
 var delivery_ledger: Array = []
 var baron_ai_state: Dictionary = {}
 
+# Sprint 16 fields
+var event_manager_state: Dictionary = {}
+
 # Legacy v1 fields (kept for backward-compat reading only)
 var train_id: String = ""
 var train_grid_coord: Dictionary = {"x": 0, "y": 0}
@@ -76,6 +79,7 @@ func to_json_string() -> String:
 		"faction_state": faction_state,
 		"delivery_ledger": delivery_ledger,
 		"baron_ai_state": baron_ai_state,
+		"event_manager_state": event_manager_state,
 	}
 	return JSON.stringify(dict, "\t")
 
@@ -121,6 +125,9 @@ static func from_json_string(json_str: String) -> SaveGameData:
 	data.faction_state = dict.get("faction_state", {}) as Dictionary
 	data.delivery_ledger = _to_dict_array(dict.get("delivery_ledger", []))
 	data.baron_ai_state = dict.get("baron_ai_state", {}) as Dictionary
+
+	# v5 fields (optional for backward compat)
+	data.event_manager_state = dict.get("event_manager_state", {}) as Dictionary
 
 	# v1 legacy fallback
 	var train_dict: Dictionary = dict.get("train", {}) as Dictionary

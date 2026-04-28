@@ -15,6 +15,25 @@ extends Node2D
 var _map_width: int = 64
 var _map_height: int = 64
 
+var _plains_tex: Texture2D
+var _river_tex: Texture2D
+var _wetland_tex: Texture2D
+var _forest_tex: Texture2D
+var _hills_tex: Texture2D
+
+
+func _ready() -> void:
+	_plains_tex = _try_load("res://assets/generated/plains_tile.png")
+	_river_tex = _try_load("res://assets/generated/river_tile.png")
+	_wetland_tex = _try_load("res://assets/generated/wetland_tile.png")
+	_forest_tex = _try_load("res://assets/generated/forest_tile.png")
+	_hills_tex = _try_load("res://assets/generated/hills_tile.png")
+
+
+func _try_load(path: String) -> Texture2D:
+	var tex := load(path) as Texture2D
+	return tex
+
 
 func setup(width: int, height: int) -> void:
 	_map_width = width
@@ -26,8 +45,13 @@ func _draw() -> void:
 	for y in range(_map_height):
 		for x in range(_map_width):
 			var world_pos := _grid_to_world(Vector2i(x, y))
-			var color := _get_terrain_color(x, y)
-			_draw_diamond(world_pos, color)
+			var tex := _get_terrain_texture(x, y)
+			if tex != null:
+				var tex_size := tex.get_size()
+				draw_texture(tex, world_pos - tex_size / 2.0)
+			else:
+				var color := _get_terrain_color(x, y)
+				_draw_diamond(world_pos, color)
 			if show_grid:
 				_draw_grid_outline(world_pos)
 
@@ -36,6 +60,19 @@ func _grid_to_world(grid: Vector2i) -> Vector2:
 	var wx := (grid.x - grid.y) * (tile_width / 2)
 	var wy := (grid.x + grid.y) * (tile_height / 2)
 	return Vector2(wx, wy)
+
+
+func _get_terrain_texture(gx: int, gy: int) -> Texture2D:
+	var color := _get_terrain_color(gx, gy)
+	if color == color_river:
+		return _river_tex
+	elif color == color_wetland:
+		return _wetland_tex
+	elif color == color_forest:
+		return _forest_tex
+	elif color == color_hills:
+		return _hills_tex
+	return _plains_tex
 
 
 func _draw_diamond(center: Vector2, color: Color) -> void:

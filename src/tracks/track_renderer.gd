@@ -8,6 +8,16 @@ extends Node2D
 @export var node_radius: float = 3.0
 
 var _graph: TrackGraph
+var _track_tex: Texture2D
+
+
+func _ready() -> void:
+	_track_tex = _try_load("res://assets/generated/track_segment.png")
+
+
+func _try_load(path: String) -> Texture2D:
+	var tex := load(path) as Texture2D
+	return tex
 
 
 func setup(graph: TrackGraph) -> void:
@@ -23,6 +33,14 @@ func _draw() -> void:
 		var from_world := WorldMap.grid_to_world(edge.from_coord)
 		var to_world := WorldMap.grid_to_world(edge.to_coord)
 		draw_line(from_world, to_world, track_color, track_width, true)
+
+		if _track_tex != null:
+			var midpoint := from_world.lerp(to_world, 0.5)
+			var angle := (to_world - from_world).angle()
+			var tex_size := _track_tex.get_size()
+			draw_set_transform(midpoint, angle, Vector2.ONE)
+			draw_texture(_track_tex, -tex_size / 2.0)
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 	# Draw node dots
 	for node_coord in _graph.get_all_nodes():

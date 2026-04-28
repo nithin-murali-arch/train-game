@@ -32,8 +32,12 @@ func _tick_city(runtime: CityRuntimeState, city_data: CityData) -> void:
 		if profile == null or not profile.is_enabled:
 			continue
 		if profile.production_per_day > 0:
+			var prod_multiplier: float = 1.0
+			if runtime.port_boom_multipliers.has(profile.cargo_id):
+				prod_multiplier = runtime.port_boom_multipliers[profile.cargo_id].get("production_multiplier", 1.0) as float
+			var amount := int(roundf(profile.production_per_day * prod_multiplier))
 			var before := runtime.get_quantity(profile.cargo_id)
-			var added := runtime.add_cargo(profile.cargo_id, profile.production_per_day)
+			var added := runtime.add_cargo(profile.cargo_id, amount)
 			# Clamp to max_stock
 			var current := runtime.get_quantity(profile.cargo_id)
 			if current > profile.max_stock:
@@ -45,8 +49,12 @@ func _tick_city(runtime: CityRuntimeState, city_data: CityData) -> void:
 		if profile == null or not profile.is_enabled:
 			continue
 		if profile.demand_per_day > 0:
+			var demand_multiplier: float = 1.0
+			if runtime.port_boom_multipliers.has(profile.cargo_id):
+				demand_multiplier = runtime.port_boom_multipliers[profile.cargo_id].get("demand_multiplier", 1.0) as float
+			var amount := int(roundf(profile.demand_per_day * demand_multiplier))
 			var current := runtime.get_quantity(profile.cargo_id)
-			var to_consume := mini(current, profile.demand_per_day)
+			var to_consume := mini(current, amount)
 			if to_consume > 0:
 				runtime.remove_cargo(profile.cargo_id, to_consume)
 

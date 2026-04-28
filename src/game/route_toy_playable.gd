@@ -43,6 +43,9 @@ var baron_ai: BaronAI = null
 var ai_trains: Array[TrainEntity] = []
 var ai_runners: Array[RouteRunner] = []
 
+# Sprint 16: Events
+var event_manager: EventManager = null
+
 var train_data: TrainData
 var pathfinder: TrainPathfinder
 
@@ -79,6 +82,7 @@ func _ready() -> void:
 	_setup_faction_systems()
 	_setup_baron_ai()
 	_setup_station_upgrades()
+	_setup_events()
 
 	_auto_start()
 
@@ -167,6 +171,11 @@ func reset_simulation() -> void:
 			t.queue_free()
 	ai_trains.clear()
 
+	# Remove old event manager
+	if event_manager != null:
+		event_manager.queue_free()
+		event_manager = null
+
 	# Clear graph
 	if graph != null:
 		graph.clear()
@@ -185,6 +194,7 @@ func reset_simulation() -> void:
 	_setup_treasury()
 	_setup_faction_systems()
 	_setup_baron_ai()
+	_setup_events()
 
 	# Reset Sprint 14 state
 	reputation = 0
@@ -641,6 +651,12 @@ func _setup_baron_ai() -> void:
 	add_child(baron_ai)
 
 
+func _setup_events() -> void:
+	event_manager = EventManager.new()
+	event_manager.setup(city_data_by_id, graph, city_runtime, treasury)
+	add_child(event_manager)
+
+
 func _setup_clock() -> void:
 	clock = SimulationClock.new()
 	add_child(clock)
@@ -792,6 +808,10 @@ func _on_day_passed(day: int, month: int, year: int) -> void:
 	if baron_ai != null:
 		baron_ai.tick(day, month, year)
 
+	# Sprint 16: Event manager tick
+	if event_manager != null:
+		event_manager.tick(day, month, year)
+
 	# Set current day on all runners for ledger recording
 	for r in active_runners + ai_runners:
 		if r != null and r.has_method("set_current_day"):
@@ -801,6 +821,35 @@ func _on_day_passed(day: int, month: int, year: int) -> void:
 	if contract_manager != null:
 		contract_manager.check_deadlines(day, month, year)
 		contract_manager.generate_contracts_if_needed(day, month, year)
+
+	# Pass event state to HUD
+	var hud = get_node_or_null("HUD")
+	if hud != null and hud.has_method("update_events"):
+		hud.update_events(get_warning_events(), get_active_events())
+
+
+func get_warning_events() -> Array[EventRuntimeState]:
+	if event_manager == null:
+		return []
+	return event_manager.get_warning_events()
+
+
+func get_active_events() -> Array[EventRuntimeState]:
+	if event_manager == null:
+		return []
+	return event_manager.get_active_events()
+
+
+func repair_track_edge(from: Vector2i, to: Vector2i) -> bool:
+	if graph == null:
+		return false
+	var edge := graph.get_edge(from, to)
+	if edge == null:
+		return false
+	var repair := TrackRepair.new()
+	if not repair.can_repair(edge, treasury):
+		return false
+	return repair.repair_edge(edge, treasury)
 
 
 func get_maintenance_discount_for_city(city_id: String) -> float:

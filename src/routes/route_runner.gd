@@ -168,6 +168,11 @@ func _attempt_load() -> void:
 	var max_by_capacity := int(floorf(available_capacity / weight))
 	var to_load := mini(origin_stock, max_by_capacity)
 
+	# Apply labor strike penalty if origin city is striking
+	if _origin_runtime.is_striking:
+		var penalty: float = 0.5
+		to_load = int(to_load * penalty)
+
 	if to_load > 0:
 		_origin_runtime.remove_cargo(_schedule.cargo_id, to_load)
 		train_cargo.load_cargo(_schedule.cargo_id, to_load)
