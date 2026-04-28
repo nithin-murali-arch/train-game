@@ -1,6 +1,9 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://src/menus/MainMenu.gd" id="1_xqga4"]
+[ext_resource type="PackedScene" path="res://scenes/ui/faction_select_panel.tscn" id="2_faction_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/briefing_panel.tscn" id="3_briefing_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/scenario_select_panel.tscn" id="4_scenario_panel"]
 
 [sub_resource type="SystemFont" id="SystemFont_fthag"]
 font_names = PackedStringArray("Noto Sans", "Arial", "Helvetica", "Sans-Serif")
@@ -93,9 +96,17 @@ theme_override_font_sizes/font_size = 48
 theme_override_colors/font_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
 text = "Rail Empire"
 
-[node name="NewGameButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=681385378]
+[node name="SandboxButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=681385378]
 layout_mode = 2
-text = "New Game"
+text = "Sandbox"
+
+[node name="CampaignButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=681385379]
+layout_mode = 2
+text = "Campaign"
+
+[node name="ScenarioButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=681385380]
+layout_mode = 2
+text = "Scenario"
 
 [node name="LoadGameButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=311856137]
 layout_mode = 2
@@ -113,3 +124,12 @@ text = "Credits"
 [node name="QuitButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=1762541022]
 layout_mode = 2
 text = "Quit"
+
+[node name="FactionSelectPanel" parent="." instance=ExtResource("2_faction_panel")]
+visible = false
+
+[node name="BriefingPanel" parent="." instance=ExtResource("3_briefing_panel")]
+visible = false
+
+[node name="ScenarioSelectPanel" parent="." instance=ExtResource("4_scenario_panel")]
+visible = false

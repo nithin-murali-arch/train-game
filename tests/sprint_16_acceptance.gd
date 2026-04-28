@@ -316,7 +316,7 @@ func _test_save_load_v5() -> void:
 	})
 
 	var data: SaveGameData = SaveSerializer.serialize(rt)
-	_assert(data.save_version == 5, "Serialized as v5")
+	_assert(data.save_version == 6, "Serialized as v6")
 	_assert(not data.event_manager_state.is_empty(), "Event manager state serialized")
 	_assert(data.track_edges.size() > 0, "Track edges serialized")
 	var edge_dict: Dictionary = data.track_edges[0]

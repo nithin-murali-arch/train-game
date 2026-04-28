@@ -260,6 +260,8 @@ func _process_unloading() -> void:
 
 	# 4. Deduct maintenance/operating cost
 	var operating_cost := _train_data.maintenance_per_day
+	if _faction_manager != null:
+		operating_cost = _faction_manager.apply_maintenance_discount(operating_cost)
 	if _get_maintenance_discount_cb.is_valid():
 		var discount: float = _get_maintenance_discount_cb.call(_origin_data.city_id)
 		operating_cost = int(roundf(operating_cost * (1.0 - discount)))

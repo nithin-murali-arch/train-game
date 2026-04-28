@@ -7,7 +7,7 @@ config/description="Isometric 2D railway tycoon set in colonial India."
 config/version="0.1.0"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://tests/sprint_17_acceptance.tscn"
 
 [autoload]
 GameState="*res://src/autoload/game_state.gd"

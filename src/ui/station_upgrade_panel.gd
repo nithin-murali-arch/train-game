@@ -69,6 +69,8 @@ func _refresh() -> void:
 	_warehouse_label.text = "Level: %d / 3" % upgrades.warehouse_level
 	if upgrades.can_upgrade_warehouse():
 		var cost: int = upgrades.get_warehouse_cost()
+		if _route_toy.faction_manager != null:
+			cost = _route_toy.faction_manager.apply_station_cost_discount(cost)
 		_warehouse_btn.text = "Upgrade (₹%s)" % _comma_sep(cost)
 		_warehouse_btn.disabled = not _route_toy.treasury.can_afford(cost)
 	else:
@@ -79,6 +81,8 @@ func _refresh() -> void:
 	_loading_bay_label.text = "Level: %d / 3" % upgrades.loading_bay_level
 	if upgrades.can_upgrade_loading_bay():
 		var cost: int = upgrades.get_loading_bay_cost()
+		if _route_toy.faction_manager != null:
+			cost = _route_toy.faction_manager.apply_station_cost_discount(cost)
 		_loading_bay_btn.text = "Upgrade (₹%s)" % _comma_sep(cost)
 		_loading_bay_btn.disabled = not _route_toy.treasury.can_afford(cost)
 	else:
@@ -89,6 +93,8 @@ func _refresh() -> void:
 	_maintenance_shed_label.text = "Level: %d / 3 | Discount: %d%%" % [upgrades.maintenance_shed_level, int(upgrades.get_maintenance_discount() * 100.0)]
 	if upgrades.can_upgrade_maintenance_shed():
 		var cost: int = upgrades.get_maintenance_shed_cost()
+		if _route_toy.faction_manager != null:
+			cost = _route_toy.faction_manager.apply_station_cost_discount(cost)
 		_maintenance_shed_btn.text = "Upgrade (₹%s)" % _comma_sep(cost)
 		_maintenance_shed_btn.disabled = not _route_toy.treasury.can_afford(cost)
 	else:
@@ -121,16 +127,22 @@ func _on_upgrade(upgrade_type: String) -> void:
 	match upgrade_type:
 		"warehouse":
 			cost = upgrades.get_warehouse_cost()
+			if _route_toy.faction_manager != null:
+				cost = _route_toy.faction_manager.apply_station_cost_discount(cost)
 			if _route_toy.treasury.can_afford(cost):
 				_route_toy.treasury.spend(cost)
 				ok = upgrades.upgrade_warehouse()
 		"loading_bay":
 			cost = upgrades.get_loading_bay_cost()
+			if _route_toy.faction_manager != null:
+				cost = _route_toy.faction_manager.apply_station_cost_discount(cost)
 			if _route_toy.treasury.can_afford(cost):
 				_route_toy.treasury.spend(cost)
 				ok = upgrades.upgrade_loading_bay()
 		"maintenance_shed":
 			cost = upgrades.get_maintenance_shed_cost()
+			if _route_toy.faction_manager != null:
+				cost = _route_toy.faction_manager.apply_station_cost_discount(cost)
 			if _route_toy.treasury.can_afford(cost):
 				_route_toy.treasury.spend(cost)
 				ok = upgrades.upgrade_maintenance_shed()

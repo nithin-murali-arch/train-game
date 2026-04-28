@@ -25,6 +25,8 @@ var _last_refresh_absolute_day: int = 0
 var _refresh_interval_days: int = 7
 var _target_available_count: int = 4
 
+var _faction_manager: FactionManager = null
+
 
 func setup(
 	city_data_by_id: Dictionary,
@@ -36,6 +38,10 @@ func setup(
 	_cargo_catalog = cargo_catalog
 	_treasury = treasury
 	_reputation_callback = reputation_callback
+
+
+func set_faction_manager(faction_manager: FactionManager) -> void:
+	_faction_manager = faction_manager
 
 
 func get_reputation() -> int:
@@ -172,7 +178,10 @@ func _complete_contract(contract: ContractRuntimeState) -> void:
 	if _treasury != null:
 		_treasury.add(contract.reward_money)
 
-	set_reputation(_reputation + contract.reputation_reward)
+	var rep_bonus := contract.reputation_reward
+	if _faction_manager != null:
+		rep_bonus += _faction_manager.get_contract_reputation_bonus()
+	set_reputation(_reputation + rep_bonus)
 	contract_completed.emit(contract)
 
 

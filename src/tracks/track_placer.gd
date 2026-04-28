@@ -20,6 +20,7 @@ var _build_mode_active: bool = false
 var _city_coords: Array[Vector2i] = []
 var _on_toast: Callable
 var _owner_faction_id: String = "player_railway_company"
+var _faction_manager: FactionManager = null
 
 
 func setup(graph: TrackGraph, camera: Camera2D, preview: TrackPlacementPreview, renderer: TrackRenderer) -> void:
@@ -49,6 +50,10 @@ func set_on_toast(callback: Callable) -> void:
 
 func set_owner_faction_id(faction_id: String) -> void:
 	_owner_faction_id = faction_id
+
+
+func set_faction_manager(faction_manager: FactionManager) -> void:
+	_faction_manager = faction_manager
 
 
 func _process(_delta: float) -> void:
@@ -110,6 +115,8 @@ func _place_edge() -> void:
 
 	var length_km := _start_coord.distance_to(end_coord)
 	var cost := int(roundf(length_km * base_cost_per_km))
+	if _faction_manager != null:
+		cost = _faction_manager.apply_track_cost_discount(cost)
 
 	if _treasury != null and not _treasury.can_afford(cost):
 		_show_toast("Insufficient funds — need ₹%s" % _comma_sep(cost))

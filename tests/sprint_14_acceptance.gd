@@ -73,7 +73,7 @@ func _test_sprint_13_regression() -> void:
 
 	var data: SaveGameData = SaveSerializer.serialize(rt)
 	_assert(data != null, "Serialize works")
-	_assert(data.save_version == 5, "Save version is 5")
+	_assert(data.save_version == 6, "Save version is 6")
 
 	rt.reset_simulation()
 	_assert(rt.owned_trains.is_empty(), "Reset clears trains")
@@ -415,7 +415,7 @@ func _test_save_load_v3() -> void:
 	rt.contract_manager._accepted.append(contract)
 
 	var data: SaveGameData = SaveSerializer.serialize(rt)
-	_assert(data.save_version == 5, "Serialized as v5")
+	_assert(data.save_version == 6, "Serialized as v6")
 	_assert(data.reputation == 42, "Reputation serialized")
 	_assert(not data.contracts.is_empty(), "Contracts serialized")
 	_assert(data.station_upgrades.has("patna"), "Upgrades serialized")

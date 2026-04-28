@@ -46,8 +46,11 @@ extends CanvasLayer
 @onready var _route_creation_panel: Node = %RouteCreationPanel
 @onready var _contracts_panel: Node = %ContractsPanel
 @onready var _station_upgrade_panel: Node = %StationUpgradePanel
+@onready var _objective_panel: Node = %ObjectivePanel
+@onready var _briefing_panel: Node = %BriefingPanel
 
 var _route_toy: Node
+var _campaign_manager: CampaignManager = null
 var _selected_route_index: int = 0
 var _last_trip_count: int = -1
 var _last_state_name: String = ""
@@ -59,6 +62,8 @@ var _british_treasury_label: Label
 var _market_share_label: Label
 var _ai_state_label: Label
 var _track_btn: Button
+var _objectives_btn: Button
+var _act_label: Label
 
 
 func bind_route_toy(route_toy: Node) -> void:
@@ -157,6 +162,46 @@ func _ready() -> void:
 	controls_vbox.move_child(_track_btn, _stations_btn.get_index() + 1)
 	_track_btn.pressed.connect(_on_track_pressed)
 
+	_objectives_btn = Button.new()
+	_objectives_btn.text = "Objectives"
+	controls_vbox.add_child(_objectives_btn)
+	controls_vbox.move_child(_objectives_btn, _track_btn.get_index() + 1)
+	_objectives_btn.pressed.connect(_on_objectives_pressed)
+
+	# Act label below date
+	_act_label = Label.new()
+	_act_label.text = "Act: —"
+	top_left_vbox.add_child(_act_label)
+	top_left_vbox.move_child(_act_label, _date_label.get_index() + 1)
+
+	if _objective_panel != null:
+		_objective_panel.closed.connect(func(): close_panels())
+
+	if _briefing_panel != null:
+		_briefing_panel.closed.connect(func(): close_panels())
+
+
+func bind_campaign_manager(campaign_manager: CampaignManager) -> void:
+	if _campaign_manager != null:
+		if _campaign_manager.act_advanced.is_connected(_on_act_advanced):
+			_campaign_manager.act_advanced.disconnect(_on_act_advanced)
+		if _campaign_manager.victory.is_connected(_on_campaign_victory):
+			_campaign_manager.victory.disconnect(_on_campaign_victory)
+		if _campaign_manager.loss.is_connected(_on_campaign_loss):
+			_campaign_manager.loss.disconnect(_on_campaign_loss)
+		if _campaign_manager.objective_updated.is_connected(_on_objective_updated):
+			_campaign_manager.objective_updated.disconnect(_on_objective_updated)
+
+	_campaign_manager = campaign_manager
+
+	if _campaign_manager != null:
+		_campaign_manager.act_advanced.connect(_on_act_advanced)
+		_campaign_manager.victory.connect(_on_campaign_victory)
+		_campaign_manager.loss.connect(_on_campaign_loss)
+		_campaign_manager.objective_updated.connect(_on_objective_updated)
+
+	_update_act_label()
+
 
 func close_panels() -> void:
 	if _train_purchase_panel != null:
@@ -167,6 +212,10 @@ func close_panels() -> void:
 		_contracts_panel.close()
 	if _station_upgrade_panel != null:
 		_station_upgrade_panel.close()
+	if _objective_panel != null:
+		_objective_panel.close()
+	if _briefing_panel != null:
+		_briefing_panel.close()
 
 
 func _process(delta: float) -> void:
@@ -277,6 +326,50 @@ func _on_next_route_pressed() -> void:
 
 func _on_track_pressed() -> void:
 	show_toast("Track panel not yet integrated")
+
+
+func _on_objectives_pressed() -> void:
+	if _route_toy == null or _objective_panel == null:
+		return
+	close_panels()
+	if _campaign_manager != null:
+		_objective_panel.open(_campaign_manager)
+	else:
+		show_toast("No active campaign")
+
+
+func _on_act_advanced(_new_act_index: int) -> void:
+	_update_act_label()
+	if _briefing_panel != null and _campaign_manager != null:
+		var act := _campaign_manager.get_current_act()
+		if act != null:
+			_briefing_panel.open(act)
+	show_toast("Act Advanced!")
+
+
+func _on_campaign_victory() -> void:
+	show_toast("Victory! Campaign complete.", 5.0)
+
+
+func _on_campaign_loss() -> void:
+	show_toast("Defeat. The railway has fallen.", 5.0)
+
+
+func _on_objective_updated(objective: CampaignObjective) -> void:
+	show_toast("Objective complete: %s" % objective.display_name)
+	if _objective_panel != null and _objective_panel.visible:
+		_objective_panel.refresh()
+
+
+func _update_act_label() -> void:
+	if _act_label == null:
+		return
+	if _campaign_manager != null:
+		var act := _campaign_manager.get_current_act()
+		if act != null:
+			_act_label.text = "Act: %s" % act.display_name
+			return
+	_act_label.text = "Act: —"
 
 
 func _selected_runner() -> RouteRunner:

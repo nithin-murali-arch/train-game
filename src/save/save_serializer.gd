@@ -132,6 +132,19 @@ static func serialize(route_toy: RouteToyPlayable) -> SaveGameData:
 	if route_toy.event_manager != null:
 		data.event_manager_state = route_toy.event_manager.to_dict()
 
+	# Sprint 17: campaign / scenario / faction selection
+	if route_toy.campaign_manager != null:
+		data.campaign_state = route_toy.campaign_manager.to_dict()
+	if route_toy.scenario_data != null:
+		data.scenario_id = route_toy.scenario_data.scenario_id
+	data.selected_faction_id = route_toy.selected_faction_id
+	var obj_progress := {}
+	if route_toy.campaign_manager != null:
+		for obj in route_toy.campaign_manager.objective_states:
+			if obj != null:
+				obj_progress[obj.objective_id] = obj.current_value
+	data.objective_progress = obj_progress
+
 	return data
 
 
@@ -210,6 +223,26 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 		# Sprint 16: restore events
 		if data.save_version >= 5 and route_toy.event_manager != null and not data.event_manager_state.is_empty():
 			route_toy.event_manager.restore_from_dict(data.event_manager_state)
+
+		# Sprint 17: restore campaign / scenario / faction selection
+		if data.save_version >= 6:
+			route_toy.selected_faction_id = data.selected_faction_id
+			if not data.scenario_id.is_empty():
+				match data.scenario_id:
+					"bengal_charter":
+						route_toy.scenario_data = Scenarios.create_bengal_charter_scenario()
+					"port_monopoly":
+						route_toy.scenario_data = Scenarios.create_port_monopoly_scenario()
+					"monsoon_crisis":
+						route_toy.scenario_data = Scenarios.create_monsoon_crisis_scenario()
+			if not data.campaign_state.is_empty():
+				var campaign_id: String = data.campaign_state.get("campaign_id", "") as String
+				route_toy.campaign_manager = CampaignManager.new()
+				match campaign_id:
+					"bengal_railway_charter":
+						route_toy.campaign_manager.current_campaign = BengalRailwayCharter.create_campaign()
+				route_toy.campaign_manager.from_dict(data.campaign_state)
+				route_toy.add_child(route_toy.campaign_manager)
 	else:
 		# v1/v2/v3: fresh defaults
 		if route_toy.delivery_ledger != null:
@@ -218,6 +251,10 @@ static func deserialize(data: SaveGameData, route_toy: RouteToyPlayable) -> bool
 			route_toy.baron_ai.from_dict({"state": "ANALYZE", "trip_count": 0, "consecutive_unprofitable_trips": 0})
 		if route_toy.event_manager != null:
 			route_toy.event_manager.from_dict({})
+		# v1-v5: no campaign / scenario
+		route_toy.selected_faction_id = "british"
+		route_toy.campaign_manager = null
+		route_toy.scenario_data = null
 
 	# Re-wire treasury to player's faction treasury
 	if route_toy.faction_manager != null:

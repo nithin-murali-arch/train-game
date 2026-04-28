@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/route_creation_panel.tscn" id="4_route_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/contracts_panel.tscn" id="5_contracts_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/station_upgrade_panel.tscn" id="6_station_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/objective_panel.tscn" id="7_objective_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/briefing_panel.tscn" id="8_briefing_panel"]
 
 [node name="RouteToyHUD" type="CanvasLayer"]
 script = ExtResource("2_script")
@@ -325,4 +327,10 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 
 [node name="StationUpgradePanel" parent="." instance=ExtResource("6_station_panel")]
+unique_name_in_owner = true
+
+[node name="ObjectivePanel" parent="." instance=ExtResource("7_objective_panel")]
+unique_name_in_owner = true
+
+[node name="BriefingPanel" parent="." instance=ExtResource("8_briefing_panel")]
 unique_name_in_owner = true

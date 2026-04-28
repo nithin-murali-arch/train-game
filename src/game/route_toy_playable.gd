@@ -46,6 +46,16 @@ var ai_runners: Array[RouteRunner] = []
 # Sprint 16: Events
 var event_manager: EventManager = null
 
+# Sprint 17: Faction selection
+var selected_faction_id: String = "british"
+
+# Sprint 17: Audio
+var audio_manager: AudioManager = null
+
+# Sprint 17: Campaign / Scenario
+var campaign_manager: CampaignManager = null
+var scenario_data: ScenarioData = null
+
 var train_data: TrainData
 var pathfinder: TrainPathfinder
 
@@ -67,6 +77,13 @@ var _starting_capital: int = 0
 
 
 func _ready() -> void:
+	# Check GameState for menu-driven selections (campaign/scenario/faction)
+	var gs := get_node_or_null("/root/GameState")
+	if gs != null:
+		var faction_id = gs.get_meta("selected_faction_id", "")
+		if not faction_id.is_empty():
+			selected_faction_id = faction_id
+
 	_catalog = DataCatalog.new()
 	_load_cities()
 	_build_cargo_catalog()
@@ -83,6 +100,8 @@ func _ready() -> void:
 	_setup_baron_ai()
 	_setup_station_upgrades()
 	_setup_events()
+	_setup_audio()
+	_setup_campaign_manager()
 
 	_auto_start()
 
@@ -92,6 +111,8 @@ func _ready() -> void:
 # ------------------------------------------------------------------------------
 
 func start_route() -> void:
+	if audio_manager != null:
+		audio_manager.play_click()
 	if runner == null:
 		_show_toast("Create a route first")
 		return
@@ -108,6 +129,8 @@ func start_route() -> void:
 
 
 func pause_resume() -> void:
+	if audio_manager != null:
+		audio_manager.play_click()
 	if clock == null:
 		return
 	if clock.is_paused:
@@ -117,6 +140,8 @@ func pause_resume() -> void:
 
 
 func set_speed_preset(preset: String) -> void:
+	if audio_manager != null:
+		audio_manager.play_click()
 	if clock == null:
 		return
 	if preset == "pause":
@@ -128,14 +153,24 @@ func set_speed_preset(preset: String) -> void:
 
 
 func advance_one_day() -> void:
+	if audio_manager != null:
+		audio_manager.play_click()
 	if clock == null:
 		return
 	clock.advance_one_day()
 
 
-func reset_simulation() -> void:
+func reset_simulation(mode: String = "sandbox") -> void:
+	if audio_manager != null:
+		audio_manager.play_click()
 	if clock == null:
 		return
+
+	# Preserve campaign manager for campaign mode
+	var preserved_campaign: CampaignManager = null
+	if mode == "campaign" and campaign_manager != null:
+		preserved_campaign = campaign_manager
+		remove_child(campaign_manager)
 
 	# Stop and remove all runners
 	for r in active_runners:
@@ -176,6 +211,11 @@ func reset_simulation() -> void:
 		event_manager.queue_free()
 		event_manager = null
 
+	# Remove old campaign manager (unless preserved)
+	if campaign_manager != null and campaign_manager != preserved_campaign:
+		campaign_manager.queue_free()
+		campaign_manager = null
+
 	# Clear graph
 	if graph != null:
 		graph.clear()
@@ -196,10 +236,16 @@ func reset_simulation() -> void:
 	_setup_baron_ai()
 	_setup_events()
 
+	# Re-wire placer to new treasury and faction manager
+	if placer != null:
+		placer.set_treasury(treasury)
+		placer.set_faction_manager(faction_manager)
+
 	# Reset Sprint 14 state
 	reputation = 0
 	contract_manager = ContractManager.new()
 	contract_manager.setup(city_data_by_id, cargo_catalog, treasury)
+	contract_manager.set_faction_manager(faction_manager)
 	station_upgrades.clear()
 	for city_id in city_data_by_id.keys():
 		station_upgrades[city_id] = StationUpgradeState.new()
@@ -216,7 +262,18 @@ func reset_simulation() -> void:
 		if hud.has_method("bind_route_toy"):
 			hud.bind_route_toy(self)
 
-	_show_toast("Simulation reset")
+	if mode == "scenario" and scenario_data != null:
+		_apply_scenario_starting_conditions()
+		_show_toast("Scenario reset")
+	elif mode == "campaign":
+		if preserved_campaign != null:
+			campaign_manager = preserved_campaign
+			add_child(campaign_manager)
+		_show_toast("Campaign reset")
+	else:
+		scenario_data = null
+		campaign_manager = null
+		_show_toast("Simulation reset")
 
 
 # ------------------------------------------------------------------------------
@@ -224,6 +281,8 @@ func reset_simulation() -> void:
 # ------------------------------------------------------------------------------
 
 func toggle_build_mode() -> void:
+	if audio_manager != null:
+		audio_manager.play_click()
 	if placer == null:
 		return
 	var active := not placer._build_mode_active
@@ -273,6 +332,9 @@ func purchase_train(train_id: String, city_id: String) -> bool:
 	train_by_instance_id[t.instance_id] = t
 
 	owned_trains.append(t)
+
+	if audio_manager != null:
+		audio_manager.play_cash()
 
 	_show_toast("Purchased %s (%s) at %s — ₹%s" % [t_data.display_name, t.instance_id, city_data_by_id[city_id].display_name, _comma_sep(t_data.cost)])
 	return true
@@ -355,6 +417,9 @@ func create_route(params: Dictionary) -> bool:
 	new_runner.start_route()
 	if clock != null and clock.is_paused:
 		set_speed_preset("1x")
+
+	if audio_manager != null:
+		audio_manager.play_confirm()
 
 	_show_toast("Route created: %s → %s (%s)" % [
 		city_data_by_id[origin_id].display_name,
@@ -633,9 +698,20 @@ func _setup_cities_runtime() -> void:
 
 func _setup_treasury() -> void:
 	var faction: FactionData = _catalog.get_faction_by_id("player_railway_company")
-	_starting_capital = faction.starting_capital if faction != null else 50000
+	var base_capital: int = faction.starting_capital if faction != null else 50000
+
+	var starting_capital := base_capital
+	match selected_faction_id:
+		"british":
+			starting_capital = 60000
+		"french":
+			starting_capital = 50000
+		"amdani":
+			starting_capital = 45000
+
 	faction_manager = FactionManager.new()
-	faction_manager.setup(_starting_capital, 50000)
+	var bonuses := AvailableFactions.get_all_bonuses_for_faction(selected_faction_id)
+	faction_manager.setup(starting_capital, 50000, bonuses)
 	treasury = faction_manager.get_treasury_for_faction(FactionManager.FACTION_PLAYER)
 
 
@@ -677,6 +753,7 @@ func _setup_track_placer() -> void:
 	placer = TrackPlacer.new()
 	placer.setup(graph, world._camera, preview, renderer)
 	placer.set_treasury(treasury)
+	placer.set_faction_manager(faction_manager)
 
 	var city_coords: Array[Vector2i] = []
 	for city_id in cities_grid.keys():
@@ -689,6 +766,7 @@ func _setup_track_placer() -> void:
 func _setup_contracts() -> void:
 	contract_manager = ContractManager.new()
 	contract_manager.setup(city_data_by_id, cargo_catalog, treasury, func(new_rep: int): reputation = new_rep)
+	contract_manager.set_faction_manager(faction_manager)
 	# Generate initial contracts
 	if clock != null:
 		contract_manager.generate_contracts_if_needed(clock.current_day, clock.current_month, clock.current_year)
@@ -749,6 +827,8 @@ func load_game() -> bool:
 
 
 func _show_toast(message: String) -> void:
+	if audio_manager != null and message.contains("Insufficient"):
+		audio_manager.play_error()
 	_show_save_toast(message)
 
 
@@ -763,6 +843,8 @@ func _show_save_toast(message: String) -> void:
 func _on_trip_completed(stats: RouteProfitStats) -> void:
 	if stats == null:
 		return
+	if audio_manager != null:
+		audio_manager.play_train_arrive()
 
 	# Find the runner that emitted this signal
 	var found_runner: RouteRunner = null
@@ -822,6 +904,10 @@ func _on_day_passed(day: int, month: int, year: int) -> void:
 		contract_manager.check_deadlines(day, month, year)
 		contract_manager.generate_contracts_if_needed(day, month, year)
 
+	# Sprint 17: Campaign objective tick
+	if campaign_manager != null:
+		campaign_manager.tick_objectives(self)
+
 	# Pass event state to HUD
 	var hud = get_node_or_null("HUD")
 	if hud != null and hud.has_method("update_events"):
@@ -873,3 +959,98 @@ static func _comma_sep(n: int) -> String:
 		result = s[i] + result
 		count += 1
 	return result
+
+
+# ------------------------------------------------------------------------------
+# Sprint 17: Audio
+# ------------------------------------------------------------------------------
+
+func _setup_audio() -> void:
+	audio_manager = AudioManager.new()
+	add_child(audio_manager)
+
+
+# ------------------------------------------------------------------------------
+# Sprint 17: Campaign / Scenario / Sandbox
+# ------------------------------------------------------------------------------
+
+func _setup_campaign_manager() -> void:
+	# Campaign manager is created on demand via start_campaign()
+	campaign_manager = null
+
+
+func start_campaign(campaign_id: String) -> void:
+	reset_simulation("campaign")
+	campaign_manager = CampaignManager.new()
+	match campaign_id:
+		"bengal_railway_charter":
+			campaign_manager.current_campaign = BengalRailwayCharter.create_campaign()
+	campaign_manager.start_campaign(campaign_id)
+	add_child(campaign_manager)
+	_show_toast("Campaign started: %s" % campaign_manager.current_campaign.display_name)
+
+
+func start_scenario(scenario_id: String) -> void:
+	reset_simulation("scenario")
+	match scenario_id:
+		"bengal_charter":
+			scenario_data = Scenarios.create_bengal_charter_scenario()
+		"port_monopoly":
+			scenario_data = Scenarios.create_port_monopoly_scenario()
+		"monsoon_crisis":
+			scenario_data = Scenarios.create_monsoon_crisis_scenario()
+	_apply_scenario_starting_conditions()
+	if scenario_data != null:
+		_show_toast("Scenario started: %s" % scenario_data.display_name)
+	else:
+		_show_toast("Unknown scenario: %s" % scenario_id)
+
+
+func start_sandbox() -> void:
+	reset_simulation("sandbox")
+	_show_toast("Sandbox mode started")
+
+
+func _apply_scenario_starting_conditions() -> void:
+	if scenario_data == null:
+		return
+
+	# Starting money
+	if scenario_data.starting_money > 0 and faction_manager != null:
+		var player_treasury := faction_manager.get_treasury_for_faction(FactionManager.FACTION_PLAYER)
+		if player_treasury != null:
+			player_treasury.balance = scenario_data.starting_money
+			treasury = player_treasury
+
+	# Prebuilt track
+	for track in scenario_data.prebuilt_track:
+		var from_id: String = track.get("from", "") as String
+		var to_id: String = track.get("to", "") as String
+		if cities_grid.has(from_id) and cities_grid.has(to_id):
+			if graph != null:
+				var from_grid: Vector2i = cities_grid[from_id]
+				var to_grid: Vector2i = cities_grid[to_id]
+				if not graph.has_node(from_grid):
+					graph.add_node(from_grid)
+				if not graph.has_node(to_grid):
+					graph.add_node(to_grid)
+				graph.add_edge(from_grid, to_grid, FactionManager.FACTION_PLAYER)
+	if renderer != null:
+		renderer.setup(graph)
+
+	# Starting trains
+	for train_info in scenario_data.starting_trains:
+		var t_id: String = train_info.get("train_id", "") as String
+		var t_city: String = train_info.get("city_id", "") as String
+		if not t_id.is_empty() and not t_city.is_empty():
+			purchase_train(t_id, t_city)
+
+
+func get_campaign_state_name() -> String:
+	if campaign_manager != null and campaign_manager.current_campaign != null:
+		var act := campaign_manager.get_current_act()
+		var act_name := act.display_name if act != null else "Act %d" % (campaign_manager.current_act_index + 1)
+		return "%s: %s" % [campaign_manager.current_campaign.display_name, act_name]
+	if scenario_data != null:
+		return "Scenario: %s" % scenario_data.display_name
+	return "Sandbox"

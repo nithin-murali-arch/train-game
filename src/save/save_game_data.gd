@@ -2,7 +2,7 @@ class_name SaveGameData
 extends RefCounted
 
 
-const CURRENT_VERSION: int = 5
+const CURRENT_VERSION: int = 6
 
 var save_version: int = CURRENT_VERSION
 var saved_at: String = ""
@@ -43,6 +43,12 @@ var baron_ai_state: Dictionary = {}
 # Sprint 16 fields
 var event_manager_state: Dictionary = {}
 
+# Sprint 17 fields
+var campaign_state: Dictionary = {}
+var scenario_id: String = ""
+var selected_faction_id: String = "british"
+var objective_progress: Dictionary = {}
+
 # Legacy v1 fields (kept for backward-compat reading only)
 var train_id: String = ""
 var train_grid_coord: Dictionary = {"x": 0, "y": 0}
@@ -80,6 +86,10 @@ func to_json_string() -> String:
 		"delivery_ledger": delivery_ledger,
 		"baron_ai_state": baron_ai_state,
 		"event_manager_state": event_manager_state,
+		"campaign_state": campaign_state,
+		"scenario_id": scenario_id,
+		"selected_faction_id": selected_faction_id,
+		"objective_progress": objective_progress,
 	}
 	return JSON.stringify(dict, "\t")
 
@@ -128,6 +138,12 @@ static func from_json_string(json_str: String) -> SaveGameData:
 
 	# v5 fields (optional for backward compat)
 	data.event_manager_state = dict.get("event_manager_state", {}) as Dictionary
+
+	# v6 fields (optional for backward compat)
+	data.campaign_state = dict.get("campaign_state", {}) as Dictionary
+	data.scenario_id = dict.get("scenario_id", "") as String
+	data.selected_faction_id = dict.get("selected_faction_id", "british") as String
+	data.objective_progress = dict.get("objective_progress", {}) as Dictionary
 
 	# v1 legacy fallback
 	var train_dict: Dictionary = dict.get("train", {}) as Dictionary

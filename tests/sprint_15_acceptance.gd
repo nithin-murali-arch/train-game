@@ -73,7 +73,7 @@ func _test_sprint_13_regression() -> void:
 
 	var data: SaveGameData = SaveSerializer.serialize(rt)
 	_assert(data != null, "Serialize works")
-	_assert(data.save_version == 5, "Save version is 5")
+	_assert(data.save_version == 6, "Save version is 6")
 
 	rt.reset_simulation()
 	_assert(rt.owned_trains.is_empty(), "Reset clears trains")
@@ -397,7 +397,7 @@ func _test_save_load_v4() -> void:
 	rt.delivery_ledger.record_delivery(1, FactionManager.FACTION_PLAYER, "r1", "t1", "patna", "kolkata", "coal", 50, 750, 50)
 
 	var data: SaveGameData = SaveSerializer.serialize(rt)
-	_assert(data.save_version == 5, "Serialized as v5")
+	_assert(data.save_version == 6, "Serialized as v6")
 	_assert(not data.faction_state.is_empty(), "Faction state serialized")
 	_assert(data.delivery_ledger.size() > 0, "Delivery ledger serialized")
 
@@ -405,7 +405,7 @@ func _test_save_load_v4() -> void:
 	var british_before: int = rt.faction_manager.get_balance(FactionManager.FACTION_BRITISH)
 
 	rt.reset_simulation()
-	_assert(rt.faction_manager.get_balance(FactionManager.FACTION_PLAYER) == 50000, "Reset restores default player capital")
+	_assert(rt.faction_manager.get_balance(FactionManager.FACTION_PLAYER) == 60000, "Reset restores default British capital")
 
 	var ok := SaveSerializer.deserialize(data, rt)
 	_assert(ok, "Deserialize v4 succeeds")
