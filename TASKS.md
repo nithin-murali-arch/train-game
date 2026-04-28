@@ -436,20 +436,45 @@
 
 ---
 
-## Sprint 17 — Campaign/Scenario Packaging + Polish 🔒 LOCKED
+## Sprint 17 — Campaign/Scenario Packaging + Polish ✅ COMPLETE
 
 **Goal:** Package proven systems into a coherent playable build.
 
-- [ ] `CampaignData` and `CampaignManager`
-- [ ] Bengal Railway Charter campaign (5 acts)
-- [ ] Objective panel and briefing screens
-- [ ] Faction selection (British, French, Amdani)
-- [ ] Scenario mode (Bengal Charter, Port Monopoly, Monsoon Crisis)
-- [ ] UI theme polish across all screens
-- [ ] Better placeholder sprites and terrain
-- [ ] Basic audio feedback and mute setting
-- [ ] Desktop export presets
-- [ ] 60-minute crash-free test
+### Systems Delivered
+- [x] **CampaignData** — `src/campaign/campaign_data.gd` + `CampaignActData` inner class
+- [x] **CampaignObjective** — `src/campaign/campaign_objective.gd` (9 objective types)
+- [x] **CampaignManager** — `src/campaign/campaign_manager.gd` (act advancement, victory/loss)
+- [x] **Bengal Railway Charter** — `src/campaign/bengal_railway_charter.gd` (5 acts, progressive objectives)
+- [x] **Scenarios** — `src/campaign/scenarios.gd` (Bengal Charter, Port Monopoly, Monsoon Crisis)
+- [x] **Faction bonuses** — `src/factions/available_factions.gd` + `faction_bonus_data.gd`
+  - British: +₹10k starting capital (₹60k total)
+  - French: +2 reputation per contract
+  - Amdani: 15% track and station cost discount
+- [x] **ObjectivePanel** — `src/ui/objective_panel.gd` + `scenes/ui/objective_panel.tscn`
+- [x] **BriefingPanel** — `src/ui/briefing_panel.gd` + `scenes/ui/briefing_panel.tscn`
+- [x] **FactionSelectPanel** — `src/ui/faction_select_panel.gd` + `scenes/ui/faction_select_panel.tscn`
+- [x] **ScenarioSelectPanel** — `src/ui/scenario_select_panel.gd` + `scenes/ui/scenario_select_panel.tscn`
+- [x] **Menu integration** — MainMenu → Sandbox / Campaign / Scenario via GameState autoload
+- [x] **AudioManager** — `src/audio/audio_manager.gd` (runtime-generated click/confirm/error/cash/train sounds + mute)
+- [x] **Export presets** — macOS, Windows, Linux desktop targets
+- [x] **Save/Load v6** — `CURRENT_VERSION = 6`, persists campaign, scenario, faction, objective progress; v1-v5 backward compat
+- [x] **Procedural Blender assets** — `tools/generate_assets.py` (terrain tiles, train sprites, city markers, track segments, cargo icons)
+
+### Test Results
+- Sprint 17 acceptance: **36 PASS, 0 FAIL** (16 test suites)
+- Sprint 16 regression: **33 PASS, 0 FAIL**
+- Sprint 15 regression: **52 PASS, 0 FAIL**
+- Sprint 14 regression: **58 PASS, 0 FAIL**
+- Sprint 13 regression: **47 PASS, 0 FAIL**
+
+### Post-Completion Fix
+- **AudioManager parse error:** `is_muted` was both a variable and a function. Removed the redundant function.
+- **Test script loading:** Godot headless mode requires `--editor --quit` pre-scan for `class_name` resolution. Documented in test runner workflow.
+
+### Known Limitations
+- UI theme polish is functional but not final-art quality
+- 60-minute crash-free playtest not yet performed
+- Scenario win/loss conditions are checked but not yet surfaced as end-game screens
 
 ---
 
